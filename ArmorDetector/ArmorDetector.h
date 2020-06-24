@@ -53,7 +53,7 @@ using namespace std;
  * 			3. remeber to change the path of pictures if using GET_ARMOR_PIC // 注意修改图片路径
  **************************************************************/
 //#define DEBUG_PRETREATMENT
-//#define DEBUG_DETECTION
+#define DEBUG_DETECTION
 #define SHOW_RESULT
 //#define GET_ARMOR_PIC
 #define DEBUG_HSV
