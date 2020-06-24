@@ -328,6 +328,7 @@ namespace rm
             */
             cv::Mat binBrightImg, hsvImg;//二值化
             cvtColor(_roiImg, hsvImg, COLOR_BGR2HSV);
+            cvtColor(_roiImg, _grayImg, COLOR_BGR2GRAY, 1);
 
             Scalar hsv_lower, hsv_upper;
             int lower[3], upper[3];
@@ -486,7 +487,7 @@ namespace rm
 			{
 				lightsRecs.emplace_back(light.rec());
 			}
-			cvex::showRectangles(_debugWindowName, _debugImg, _debugImg, lightsRecs, cvex::MAGENTA, 1, _roi.tl());
+			cvex::showRectangles(_debugWindowName, _debugImg, _debugImg, lightsRecs, cvex::MAGENTA, 0, _roi.tl());
 #endif //DEBUG_DETECTION
 
             if (lightInfos.empty())
@@ -515,9 +516,9 @@ namespace rm
                     const LightDescriptor& rightLight = lightInfos[j];
 
 #ifdef DEBUG_DETECTION
-                    Mat pairImg = _debugImg.clone();
+                    Mat pairImg = _srcImg.clone();
 					vector<RotatedRect> curLightPair{ leftLight.rec(), rightLight.rec() };
-					cvex::showRectangles("debug pairing", pairImg, pairImg, curLightPair, cvex::CYAN, 1, _roi.tl());
+					cvex::showRectangles("debug pairing", pairImg, pairImg, curLightPair, cvex::CYAN, 0, _roi.tl());
 #endif // DEBUG_DETECTION
 
                     /*
@@ -530,6 +531,10 @@ namespace rm
                     if (angleDiff_ > _param.light_max_angle_diff_ ||
                         LenDiff_ratio > _param.light_max_height_diff_ratio_)
                     {
+#ifdef DEBUG_DETECTION
+                        cout << "angleDiff: " << angleDiff_ << endl;
+                        cout << "LenDiff_ratio: " << LenDiff_ratio << endl;
+#endif
                         continue;
                     }
 
@@ -549,6 +554,10 @@ namespace rm
                         ratio > _param.armor_max_aspect_ratio_ ||
                         ratio < _param.armor_min_aspect_ratio_)
                     {
+#ifdef DEBUG_DETECTION
+                        cout << "yDiff_ratio: " << yDiff_ratio << "  xDiff_ratio: " << xDiff_ratio << endl;
+                        cout << "ratio: " << ratio << endl;
+#endif
                         continue;
                     }
 
@@ -651,9 +660,9 @@ namespace rm
 
 
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
- Pre_GetViex();
-        //cv::imshow(_debugWindowName, _debugImg);
-        //cv::waitKey(1);
+        Pre_GetViex();
+        cv::imshow(_debugWindowName, _debugImg);
+        cv::waitKey(0);
 #endif //DEBUG_DETECTION || SHOW_RESULT
 
         return _flag = ARMOR_LOCAL;
