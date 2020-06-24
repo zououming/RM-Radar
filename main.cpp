@@ -15,11 +15,15 @@ int main(int argc, char * argv[]) {
     ImageConsProd image_cons_prod(&setting, &other_param,cameraClass1);
     image_cons_prod.ImageConsProd_init();
 
-    string img_path = "/home/zououming/Pictures/2020-06-23 20-29-50 的屏幕截图.png";
-    Mat img = imread(img_path);
     image_cons_prod.armor_detector->setEnemyColor(RED);
-    image_cons_prod.armor_detector->loadImg(img);
-    image_cons_prod.armor_detector->detect();
+    string img_path = "/home/zououming/Pictures/hsv/";
+    Mat img;
+    for( int i = 2; i < 12; i++ ) {
+        string path = img_path + to_string(i) + ".png";
+        img = imread(path);
+        image_cons_prod.armor_detector->loadImg(img);
+        image_cons_prod.armor_detector->detect();
+    }
 }
 
 

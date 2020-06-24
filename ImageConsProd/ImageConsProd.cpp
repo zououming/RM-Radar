@@ -165,7 +165,7 @@ void ImageConsProd::ImageProducer() {
 
 void ImageConsProd::ImageConsumer() {
     sleep(2);
-    //this->armor_detector->setEnemyColor(BLUE);
+    this->armor_detector->setEnemyColor(BLUE);
     //Mat src;
 
     /* Variables for angle solve module */

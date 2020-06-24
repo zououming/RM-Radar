@@ -139,11 +139,9 @@ namespace rm
         vertex[1] = upper_r;
         vertex[2] = lower_r;
         vertex[3] = lower_l;
-        cv::line(srcImg, vertex[1], vertex[2], 255, 1, 8, 0);
-        cv::line(srcImg, vertex[2], vertex[3], 255, 1, 8, 0);
-        cv::line(srcImg, vertex[3], vertex[4], 255, 1, 8, 0);
-        cv::line(srcImg, vertex[4], vertex[1], 255, 1, 8, 0);
-        cv::imshow("grayImg", grayImg);
+
+        for ( int i = 0; i < 4; i++ )
+        cv::line(srcImg, vertex[i], vertex[(i+1)%4], cvex::GREEN, 1, 8, 0);
 
         //set armor type
         type = armorType;
@@ -309,6 +307,7 @@ namespace rm
         }
 
 #ifdef DEBUG_DETECTION
+        _roiImg = _srcImg.clone();
         rectangle(_debugImg, _roi, cvex::YELLOW);
 #endif // DEBUG_DETECTION
     }
@@ -344,58 +343,117 @@ namespace rm
                     hsv_lower(i) = lower_red_hsv[i];
                     hsv_upper(i) = upper_red_hsv[i];
                     lower[i] = lower_red_hsv[i];
-                    upper[i] = lower_red_hsv[i];
+                    upper[i] = upper_red_hsv[i];
                 }
-            Mat element = getStructuringElement(MORPH_ELLIPSE, cv::Size(kernel_size[0], kernel_size[0]));
-            Mat dilate_element = getStructuringElement(MORPH_ELLIPSE, cv::Size(kernel_size[0], kernel_size[0]));
-            Mat erode_element = getStructuringElement(MORPH_ELLIPSE, cv::Size(kernel_size[1], kernel_size[1]));
+            Mat element = getStructuringElement(MORPH_ELLIPSE, cv::Size(3, 3));
+            Mat dilate_element = getStructuringElement(MORPH_ELLIPSE, cv::Size(3, 3));
+            Mat erode_element = getStructuringElement(MORPH_ELLIPSE, cv::Size(3, 3));
 
 #ifdef DEBUG_HSV
-            string adjust_window = "adjust HSV";
-            namedWindow(adjust_window);
+            {
+                string adjust_window = "adjust HSV";
+                namedWindow(adjust_window);
 
-            createTrackbar("lower H", adjust_window, &lower[0], 180);
-            createTrackbar("lower S", adjust_window, &lower[1], 255);
-            createTrackbar("lower V", adjust_window, &lower[2], 255);
-            createTrackbar("upper H", adjust_window, &upper[0], 180);
-            createTrackbar("upper S", adjust_window, &upper[1], 255);
-            createTrackbar("upper V", adjust_window, &upper[2], 255);
+                createTrackbar("lower H", adjust_window, &lower[0], 180);
+                createTrackbar("lower S", adjust_window, &lower[1], 255);
+                createTrackbar("lower V", adjust_window, &lower[2], 255);
+                createTrackbar("upper H", adjust_window, &upper[0], 180);
+                createTrackbar("upper S", adjust_window, &upper[1], 255);
+                createTrackbar("upper V", adjust_window, &upper[2], 255);
 
-            createTrackbar("dilate size", adjust_window, &kernel_size[0], 20);
-            createTrackbar("erode size", adjust_window, &kernel_size[1], 20);
+                createTrackbar("dilate size", adjust_window, &kernel_size[0], 20);
+                createTrackbar("erode size", adjust_window, &kernel_size[1], 20);
 
-            while(1){
-                hsv_lower(0) = getTrackbarPos("lower H", adjust_window);
-                hsv_lower(1) = getTrackbarPos("lower S", adjust_window);
-                hsv_lower(2) = getTrackbarPos("lower V", adjust_window);
-                hsv_upper(0) = getTrackbarPos("upper H", adjust_window);
-                hsv_upper(0) = getTrackbarPos("upper S", adjust_window);
-                hsv_upper(0) = getTrackbarPos("upper V", adjust_window);
+                while (1) {
+                    hsv_lower(0) = getTrackbarPos("lower H", adjust_window);
+                    hsv_lower(1) = getTrackbarPos("lower S", adjust_window);
+                    hsv_lower(2) = getTrackbarPos("lower V", adjust_window);
+                    hsv_upper(0) = getTrackbarPos("upper H", adjust_window);
+                    hsv_upper(1) = getTrackbarPos("upper S", adjust_window);
+                    hsv_upper(2) = getTrackbarPos("upper V", adjust_window);
 
-                kernel_size[0] = getTrackbarPos("dilate size", adjust_window);
-                kernel_size[1] = getTrackbarPos("erode size", adjust_window);
+                    if(_enemy_color == BLUE)
+                        for ( int i = 0; i < 3; i++ ) {
+                            lower_blue_hsv[i] = hsv_lower(i);
+                            upper_blue_hsv[i] = hsv_upper(i);
+                        }
+                    else
+                        for ( int i = 0; i < 3; i++ ) {
+                            lower_red_hsv[i] = hsv_lower(i);
+                            upper_red_hsv[i] = hsv_upper(i);
+                        }
 
-                inRange(hsvImg, hsv_lower, hsv_upper, binBrightImg);
-                if( _enemy_color == RED ){
-                    Mat red;
-                    hsv_lower(0) = red_H[0];
-                    hsv_upper(0) = red_H[1];
-                    inRange(hsvImg, hsv_lower, hsv_upper, red);
-                    bitwise_or(red, binBrightImg, binBrightImg);
+                    kernel_size[0] = getTrackbarPos("dilate size", adjust_window);
+                    kernel_size[1] = getTrackbarPos("erode size", adjust_window);
+
+                    inRange(hsvImg, hsv_lower, hsv_upper, binBrightImg);
+                    if (_enemy_color == RED) {
+                        Mat red;
+                        hsv_lower(0) = red_H[0];
+                        hsv_upper(0) = red_H[1];
+                        inRange(hsvImg, hsv_lower, hsv_upper, red);
+                        bitwise_or(red, binBrightImg, binBrightImg);
+                    }
+
+                    if (kernel_size[1] >= 3) {
+                        erode_element = getStructuringElement(MORPH_ELLIPSE, Size(kernel_size[1], kernel_size[1]));
+                        erode(binBrightImg, binBrightImg, erode_element);
+                    }
+                    if (kernel_size[0] >= 3) {
+                        dilate_element = getStructuringElement(MORPH_ELLIPSE, Size(kernel_size[0], kernel_size[0]));
+                        dilate(binBrightImg, binBrightImg, dilate_element);
+                    }
+                    imshow("hsv", binBrightImg);
+
+                    vector<RotatedRect> lightsRecs;
+                    vector<vector<Point>> lightContours;                    // 寻找轮廓
+                    cv::findContours(binBrightImg.clone(), lightContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+                    for (const auto &contour : lightContours) {
+                        float lightContourArea = contourArea(contour);        // 面积判断
+                        if (contour.size() <= 5 ||
+                            lightContourArea < _param.light_min_area)
+                            continue;
+
+                        RotatedRect lightRec = fitEllipse(contour);
+                        adjustRec(lightRec, ANGLE_TO_UP);
+
+                        //float solidity = lightContourArea / lightRec.size.area();
+                        if (lightRec.size.width / lightRec.size.height > _param.light_max_ratio ||
+                            lightContourArea / lightRec.size.area() < _param.light_contour_min_solidity)
+                            continue;    // 长宽比判断
+
+                        //Mat temp;
+                        //cvex::showRectangle("light_right_position", _srcImg, temp, lightRec, cvex::GREEN,0, _roi.tl());
+
+                        lightRec.size.width *= _param.light_color_detect_extend_ratio;
+                        lightRec.size.height *= _param.light_color_detect_extend_ratio;
+                        Rect lightRect = lightRec.boundingRect();
+
+                        const Rect srcBound(Point(0, 0), _roiImg.size());
+                        lightRect &= srcBound;
+                        Mat lightImg = _roiImg(lightRect);
+                        Mat lightMask = Mat::zeros(lightRect.size(), CV_8UC1);
+                        Point2f lightVertexArray[4];//tuoyuan 4个顶点
+                        lightRec.points(lightVertexArray);
+                        std::vector<Point> lightVertex;
+                        for (int i = 0; i < 4; i++) {
+                            lightVertex.emplace_back(Point(lightVertexArray[i].x - lightRect.tl().x,
+                                                           lightVertexArray[i].y - lightRect.tl().y));
+                        }
+                        fillConvexPoly(lightMask, lightVertex, 255);
+                        if (lightImg.size().area() <= 0 || lightMask.size().area() <= 0) continue;
+                        cv::dilate(lightMask, lightMask, element);
+//                        lightInfos.push_back(LightDescriptor(lightRec));
+                        lightsRecs.emplace_back(lightRec);
+                    }
+                    Mat debug = _srcImg.clone();
+                    cvex::showRectangles("light", debug, debug  , lightsRecs, cvex::MAGENTA, -1, _roi.tl());
+                    int Key = waitKey(1);
+                    if (Key == 27) {
+                        destroyWindow(adjust_window);
+                        break;
+                    }
                 }
-
-                if( kernel_size[1] >= 3 ){
-                    erode_element = getStructuringElement(MORPH_ELLIPSE, Size(kernel_size[1], kernel_size[1]));
-                    erode(binBrightImg, binBrightImg, erode_element);
-                }
-                if( kernel_size[0] >= 3 ){
-                    dilate_element = getStructuringElement(MORPH_ELLIPSE, Size(kernel_size[0], kernel_size[0]));
-                    dilate(binBrightImg, binBrightImg, dilate_element);
-                }
-
-                imshow("hsv", binBrightImg);
-                int Key = waitKey(1);
-                if( Key == 27 ) break;
             }
 #else
             inRange(hsvImg, hsv_lower, hsv_upper, binBrightImg);
@@ -487,7 +545,7 @@ namespace rm
 			{
 				lightsRecs.emplace_back(light.rec());
 			}
-			cvex::showRectangles(_debugWindowName, _debugImg, _debugImg, lightsRecs, cvex::MAGENTA, 0, _roi.tl());
+			cvex::showRectangles(_debugWindowName, _debugImg, _debugImg, lightsRecs, cvex::MAGENTA, 1, _roi.tl());
 #endif //DEBUG_DETECTION
 
             if (lightInfos.empty())
@@ -518,7 +576,7 @@ namespace rm
 #ifdef DEBUG_DETECTION
                     Mat pairImg = _srcImg.clone();
 					vector<RotatedRect> curLightPair{ leftLight.rec(), rightLight.rec() };
-					cvex::showRectangles("debug pairing", pairImg, pairImg, curLightPair, cvex::CYAN, 0, _roi.tl());
+					cvex::showRectangles("debug pairing", pairImg, pairImg, curLightPair, cvex::CYAN, 1, _roi.tl());
 #endif // DEBUG_DETECTION
 
                     /*
@@ -585,7 +643,8 @@ namespace rm
 				}
 				armorVertexs.emplace_back(intVertex);
 			}
-			cvex::showContours(_debugWindowName, _debugImg, _debugImg, armorVertexs, cvex::WHITE, 1, _roi.tl());
+			Mat result = _srcImg.clone();
+			cvex::showContours("result", result, _debugImg, armorVertexs, cvex::WHITE, -1, _roi.tl());
 #endif //  DEBUG_DETECTION
 
             if (_armors.empty())
