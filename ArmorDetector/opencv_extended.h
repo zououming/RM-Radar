@@ -190,7 +190,8 @@ namespace cvex
         if (srcImg.channels() == 1)	cvtColor(srcImg, dstImg, cv::COLOR_GRAY2BGR);
         else if (srcImg.data != dstImg.data) srcImg.copyTo(dstImg);
 
-        cv::drawContours(dstImg, contours, -1, color, 1, 8, cv::noArray(), INT_MAX, offset);
+//        cv::drawContours(dstImg, contours, -1, color, 1, 8, cv::noArray(), INT_MAX, offset);
+        cv::drawContours(dstImg, contours, -1, color, 1, 8, cv::noArray(), INT_MAX);
 
         cv::imshow(windowName, dstImg);
         if (waitTime >= 0)

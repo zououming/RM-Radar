@@ -186,6 +186,8 @@ namespace rm
         Point2f dst[4]{ Point2f(0.0, 0.0), Point2f(width, 0.0), Point2f(width, height), Point2f(0.0, height) };
         const Mat perspMat = getPerspectiveTransform(src, dst);
         cv::warpPerspective(grayImg, frontImg, perspMat, Size(width, height));
+        int name_cont = rand();
+        cv::imwrite("/home/zououming/Pictures/train/"+to_string(name_cont)+".png", frontImg);
         cv::imshow("frontImg", frontImg);
         cv::waitKey(1);
     }
@@ -545,7 +547,7 @@ namespace rm
 			{
 				lightsRecs.emplace_back(light.rec());
 			}
-			cvex::showRectangles(_debugWindowName, _debugImg, _debugImg, lightsRecs, cvex::MAGENTA, 1, _roi.tl());
+//			cvex::showRectangles(_debugWindowName, _debugImg, _debugImg, lightsRecs, cvex::MAGENTA, 1, _roi.tl());
 #endif //DEBUG_DETECTION
 
             if (lightInfos.empty())
@@ -555,11 +557,9 @@ namespace rm
             }
         }
 
-
         /*
         *	find and filter light bar pairs
         */
-
         {
             sort(lightInfos.begin(), lightInfos.end(), [](const LightDescriptor& ld1, const LightDescriptor& ld2)
             {
@@ -576,7 +576,7 @@ namespace rm
 #ifdef DEBUG_DETECTION
                     Mat pairImg = _srcImg.clone();
 					vector<RotatedRect> curLightPair{ leftLight.rec(), rightLight.rec() };
-					cvex::showRectangles("debug pairing", pairImg, pairImg, curLightPair, cvex::CYAN, 1, _roi.tl());
+					cvex::showRectangles("debug pairing", pairImg, pairImg, curLightPair, cvex::CYAN, 0, _roi.tl());
 #endif // DEBUG_DETECTION
 
                     /*
@@ -644,7 +644,7 @@ namespace rm
 				armorVertexs.emplace_back(intVertex);
 			}
 			Mat result = _srcImg.clone();
-			cvex::showContours("result", result, _debugImg, armorVertexs, cvex::WHITE, -1, _roi.tl());
+			cvex::showContours("result", result, _debugImg, armorVertexs, cvex::GREEN, -1, _roi.tl());
 #endif //  DEBUG_DETECTION
 
             if (_armors.empty())
@@ -720,8 +720,8 @@ namespace rm
 
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
         Pre_GetViex();
-        cv::imshow(_debugWindowName, _debugImg);
-        cv::waitKey(0);
+//        cv::imshow(_debugWindowName, _debugImg);
+//        cv::waitKey(0);
 #endif //DEBUG_DETECTION || SHOW_RESULT
 
         return _flag = ARMOR_LOCAL;

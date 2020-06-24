@@ -53,10 +53,10 @@ using namespace std;
  * 			3. remeber to change the path of pictures if using GET_ARMOR_PIC // 注意修改图片路径
  **************************************************************/
 //#define DEBUG_PRETREATMENT
-#define DEBUG_DETECTION
+//#define DEBUG_DETECTION
 #define SHOW_RESULT
 //#define GET_ARMOR_PIC
-#define DEBUG_HSV
+//#define DEBUG_HSV
 
 namespace rm
 {
@@ -371,9 +371,9 @@ namespace rm
         float center_x;
         float center_y;
 
-        int lower_blue_hsv[3] = {90, 85, 167}; //hsv
-        int upper_blue_hsv[3] = {111, 255, 255};
-        int lower_red_hsv[3] = {160, 120, 160};
+        int lower_blue_hsv[3] = {90, 90, 140}; //hsv
+        int upper_blue_hsv[3] = {120, 255, 255};
+        int lower_red_hsv[3] = {160, 80, 80};
         int upper_red_hsv[3] = {180, 255, 255};
         int red_H[2] = {0, 10};
         int kernel_size[2] = {3, 3};   //dilate_size erode_size

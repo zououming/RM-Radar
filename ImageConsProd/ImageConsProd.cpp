@@ -33,10 +33,11 @@ void ImageConsProd::ImageConsProd_init() {
 void ImageConsProd::ImageProducer() {
 #ifdef USE_VIDEO
     settings->save_result=0;
-    string video_name="../test/test.MOV";
-    Mat m_pss;
-    m_pss.create(2000,2000,CV_8UC3);
-    cap->m_p=&m_pss;
+    string video_name="/home/zououming/Videos/1.mp4";
+    Mat m_pss, src;
+    Rect rec(200, 100, 1920-200-200, 1080-100-50);
+    cout <<rec.size()<<endl;
+    cap->m_p = &m_pss;
     time_t lInit;
     time_t lEnd;
     uint32_t ui32FrameCount = 0;
@@ -52,7 +53,9 @@ void ImageConsProd::ImageProducer() {
         {
             time(&lInit);
         }
-        cap_video>>m_pss;
+        cap_video >> src;
+        cout<<src.size<<endl;
+        m_pss = src(rec);
         if(m_pss.data==NULL)
         {
            continue;

@@ -79,8 +79,8 @@
     <light_min_size>5.0</light_min_size>
     <light_contour_min_solidity>0.5</light_contour_min_solidity>
     <light_max_ratio>1.0</light_max_ratio>
-    <light_max_angle_diff_>7.0</light_max_angle_diff_>
-    <light_max_height_diff_ratio_>0.2</light_max_height_diff_ratio_>
+    <light_max_angle_diff_>10.0</light_max_angle_diff_>
+    <light_max_height_diff_ratio_>0.4</light_max_height_diff_ratio_>
     <light_max_y_diff_ratio_>2.0</light_max_y_diff_ratio_>
     <light_min_x_diff_ratio_>0.5</light_min_x_diff_ratio_>
 
