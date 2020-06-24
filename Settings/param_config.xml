@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<opencv_storage>
+    <!--Parameter for Debug-->
+    <show_image>1</show_image>
+    <save_result>0</save_result>
+
+    <!--Parameter for Rune System-->
+    <sudoku_cell_width>66</sudoku_cell_width>
+    <sudoku_cell_height>37</sudoku_cell_height>
+    <!--
+    <sudoku_cell_width>138</sudoku_cell_width>
+    <sudoku_cell_height>79</sudoku_cell_height>
+    -->
+    <shoot_time_gap>200</shoot_time_gap>
+    <shoot_filter_size>7</shoot_filter_size>
+
+    <!--Parameter for Armor Detection System-->
+    <!--<min_light_gray>170</min_light_gray>-->
+    <!--<min_light_height>5</min_light_height>-->
+    <!--<avg_contrast_threshold>110</avg_contrast_threshold>-->
+    <!--<light_slope_offset>30</light_slope_offset>-->
+    <!--<max_light_delta_h>280</max_light_delta_h>-->
+    <!--<min_light_delta_h>16</min_light_delta_h>-->
+    <!--<max_light_delta_v>15</max_light_delta_v>-->
+    <!--<max_light_delta_angle>20</max_light_delta_angle>-->
+    <!--<avg_board_gray_threshold>60</avg_board_gray_threshold>-->
+    <!--<avg_board_grad_threshold>25</avg_board_grad_threshold>-->
+    <!--<grad_threshold>20</grad_threshold>-->
+    <!--<br_threshold>0</br_threshold>-->
+
+    <!--Parameter for Enemy Color, 0(default) means for red, otherwise blue-->
+
+    <!--Minimum / Maximun distance (cm) of detection-->
+    <min_detect_distance>10.0</min_detect_distance>
+    <max_detect_distance>800.0</max_detect_distance>
+
+    <!--Parameter for Template-->
+    <template_image_file>/home/ubuntu/projects/RMVision/RMVision/template.bmp</template_image_file>
+    <small_template_image_file>/home/ubuntu/projects/RMVision/RMVision/small_template.bmp</small_template_image_file>
+
+    <!--Parameter for Camera-->
+    <exposure_time >10</exposure_time>
+    <intrinsic_file_480>/home/ubuntu/projects/RMVision/RMVision/calibration-param/camera-RM3-04-640.xml</intrinsic_file_480>
+    <intrinsic_file_720>/home/ubuntu/projects/RMVision/RMVision/calibration-param/camera-RM3-04.xml</intrinsic_file_720>
+
+    <!-- // for 720p
+    <video_width>1280</video_width>
+    <video_height>720</video_height>
+    <video_fps>60</video_fps>
+    <intrinsic_file>/home/ubuntu/projects/RMVision/RMVision/calibration-param/camera-RM3-04.xml</intrinsic_file>-->
+
+
+    <!--Parameter for Vision System Mode, 0(default) means for armor detection mode, 1 means for rune system mode-->
+    <mode>0</mode>
+
+    <!--Bullet speed (m/s)-->
+    <bullet_speed>22</bullet_speed>
+
+    <!--Scale factor of Z
+    1.4596   // camrea 2
+    1.5348   // camrea MH
+    1.4714   // camrea RM3-01
+    1.5348   // camrea RM3-02
+    1.4939   // camrea RM3-03
+    1.4704   // camrea RM3-04
+    1.5158   // camrea RM3-05
+    -->
+    <scale_z>1.4704</scale_z>
+    <scale_z_480>1.0</scale_z_480>
+    <rectmode>0</rectmode>
+    <exposureMAX>1000</exposureMAX>
+    <exposureMIN>600</exposureMIN>
+    <frame>400</frame>
+    <brightness_threshold>210</brightness_threshold>
+    <color_threshold>40</color_threshold>
+    <light_color_detect_extend_ratio>1.1</light_color_detect_extend_ratio>
+    <light_min_area>10</light_min_area>
+    <light_max_angle>45.0</light_max_angle>
+    <light_min_size>5.0</light_min_size>
+    <light_contour_min_solidity>0.5</light_contour_min_solidity>
+    <light_max_ratio>1.0</light_max_ratio>
+    <light_max_angle_diff_>7.0</light_max_angle_diff_>
+    <light_max_height_diff_ratio_>0.2</light_max_height_diff_ratio_>
+    <light_max_y_diff_ratio_>2.0</light_max_y_diff_ratio_>
+    <light_min_x_diff_ratio_>0.5</light_min_x_diff_ratio_>
+
+    // Filter armor
+    <armor_big_armor_ratio>3.2</armor_big_armor_ratio>
+    <armor_small_armor_ratio>2</armor_small_armor_ratio>
+    //armor_max_height_
+    //armor_max_angle_
+    <armor_min_aspect_ratio_>1.0</armor_min_aspect_ratio_>
+    <armor_max_aspect_ratio_>5.0</armor_max_aspect_ratio_>
+
+    //other params
+    <sight_offset_normalized_base>200</sight_offset_normalized_base>
+    <area_normalized_base>1000</area_normalized_base>
+    <enemy_color>1</enemy_color>
+    <EnergyMIN>80</EnergyMIN>
+    <EnergyMAX>255</EnergyMAX>
+    <EnergyareaMIN>50</EnergyareaMIN>
+    <EnergyareaMAX>1000</EnergyareaMAX>
+    <EnergyaimMIN>1.7</EnergyaimMIN>
+    <EnergyaimMAX>2.6</EnergyaimMAX>
+    <EnergyaimA>3.0</EnergyaimA>
+    <Energymiddle>60</Energymiddle>
+    <_euclideanDistanceMIN>8500</_euclideanDistanceMIN>
+    <cameraEnum>1000</cameraEnum>
+</opencv_storage>
+
