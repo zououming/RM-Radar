@@ -7,6 +7,10 @@ CMakeFiles/RM_radar.dir/ArmorDetector/ArmorDetector.cpp.o: ../ArmorDetector/Gene
 CMakeFiles/RM_radar.dir/ArmorDetector/ArmorDetector.cpp.o: ../ArmorDetector/opencv_extended.h
 CMakeFiles/RM_radar.dir/ArmorDetector/ArmorDetector.cpp.o: ../Settings/Settings.hpp
 
+CMakeFiles/RM_radar.dir/ArmorDetector/YOLOv3Api.cpp.o: ../ArmorDetector/YOLOv3Api.cpp
+CMakeFiles/RM_radar.dir/ArmorDetector/YOLOv3Api.cpp.o: ../ArmorDetector/YOLOv3Api.h
+CMakeFiles/RM_radar.dir/ArmorDetector/YOLOv3Api.cpp.o: /home/zououming/darknet/include/darknet.h
+
 CMakeFiles/RM_radar.dir/CameraClass/CameraClass.cpp.o: ../ArmorDetector/ArmorDetector.h
 CMakeFiles/RM_radar.dir/CameraClass/CameraClass.cpp.o: ../ArmorDetector/General.h
 CMakeFiles/RM_radar.dir/CameraClass/CameraClass.cpp.o: ../CameraClass/CameraClass.cpp
@@ -44,6 +48,7 @@ CMakeFiles/RM_radar.dir/Serial/serialport.cpp.o: ../Serial/serialport.h
 
 CMakeFiles/RM_radar.dir/main.cpp.o: ../ArmorDetector/ArmorDetector.h
 CMakeFiles/RM_radar.dir/main.cpp.o: ../ArmorDetector/General.h
+CMakeFiles/RM_radar.dir/main.cpp.o: ../ArmorDetector/YOLOv3Api.h
 CMakeFiles/RM_radar.dir/main.cpp.o: ../CameraClass/CameraClass.h
 CMakeFiles/RM_radar.dir/main.cpp.o: ../CameraClass/DxImageProc.h
 CMakeFiles/RM_radar.dir/main.cpp.o: ../CameraClass/GxIAPI.h
@@ -53,4 +58,5 @@ CMakeFiles/RM_radar.dir/main.cpp.o: ../Serial/CRC_Check.h
 CMakeFiles/RM_radar.dir/main.cpp.o: ../Serial/serialport.h
 CMakeFiles/RM_radar.dir/main.cpp.o: ../Settings/Settings.hpp
 CMakeFiles/RM_radar.dir/main.cpp.o: ../main.cpp
+CMakeFiles/RM_radar.dir/main.cpp.o: /home/zououming/darknet/include/darknet.h
 

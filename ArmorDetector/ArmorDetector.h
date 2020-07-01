@@ -32,7 +32,7 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
 #include<opencv2/ml.hpp>
 #include "../Settings/Settings.hpp"
 #include<string>
-using namespace std;
+//using namespace std;
 
 /**************************************************************
  * DEBUG_PRETREATMENT 	only shows the image after the simple pretreatment	// 预处理
@@ -102,7 +102,7 @@ namespace rm
         */
         ArmorParam()
         {
-             string config_file_name = "../Settings/param_config.xml";
+            std::string config_file_name = "../Settings/param_config.xml";
             Settings set_Armor(config_file_name);
             //pre-treatment
             brightness_threshold =set_Armor.brightness_threshold;						// 亮度阈值 = 210

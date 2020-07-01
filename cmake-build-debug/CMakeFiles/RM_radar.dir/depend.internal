@@ -7,6 +7,10 @@ CMakeFiles/RM_radar.dir/ArmorDetector/ArmorDetector.cpp.o
  /home/zououming/RM-radar/ArmorDetector/General.h
  /home/zououming/RM-radar/ArmorDetector/opencv_extended.h
  /home/zououming/RM-radar/Settings/Settings.hpp
+CMakeFiles/RM_radar.dir/ArmorDetector/YOLOv3Api.cpp.o
+ /home/zououming/RM-radar/ArmorDetector/YOLOv3Api.cpp
+ /home/zououming/RM-radar/ArmorDetector/YOLOv3Api.h
+ /home/zououming/darknet/include/darknet.h
 CMakeFiles/RM_radar.dir/CameraClass/CameraClass.cpp.o
  /home/zououming/RM-radar/ArmorDetector/ArmorDetector.h
  /home/zououming/RM-radar/ArmorDetector/General.h
@@ -45,6 +49,7 @@ CMakeFiles/RM_radar.dir/Serial/serialport.cpp.o
 CMakeFiles/RM_radar.dir/main.cpp.o
  /home/zououming/RM-radar/ArmorDetector/ArmorDetector.h
  /home/zououming/RM-radar/ArmorDetector/General.h
+ /home/zououming/RM-radar/ArmorDetector/YOLOv3Api.h
  /home/zououming/RM-radar/CameraClass/CameraClass.h
  /home/zououming/RM-radar/CameraClass/DxImageProc.h
  /home/zououming/RM-radar/CameraClass/GxIAPI.h
@@ -54,3 +59,4 @@ CMakeFiles/RM_radar.dir/main.cpp.o
  /home/zououming/RM-radar/Serial/serialport.h
  /home/zououming/RM-radar/Settings/Settings.hpp
  /home/zououming/RM-radar/main.cpp
+ /home/zououming/darknet/include/darknet.h

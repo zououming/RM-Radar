@@ -186,8 +186,8 @@ namespace rm
         Point2f dst[4]{ Point2f(0.0, 0.0), Point2f(width, 0.0), Point2f(width, height), Point2f(0.0, height) };
         const Mat perspMat = getPerspectiveTransform(src, dst);
         cv::warpPerspective(grayImg, frontImg, perspMat, Size(width, height));
-        int name_cont = rand();
-        cv::imwrite("/home/zououming/Pictures/train/"+to_string(name_cont)+".png", frontImg);
+//        int name_cont = rand();
+//        cv::imwrite("/home/zououming/Pictures/train/"+to_string(name_cont)+".png", frontImg);
         cv::imshow("frontImg", frontImg);
         cv::waitKey(1);
     }

@@ -22,6 +22,12 @@ string
 
 /home/zououming/RM-radar/ArmorDetector/General.h
 
+/home/zououming/RM-radar/ArmorDetector/YOLOv3Api.h
+opencv2/opencv.hpp
+/home/zououming/RM-radar/ArmorDetector/opencv2/opencv.hpp
+darknet.h
+/home/zououming/RM-radar/ArmorDetector/darknet.h
+
 /home/zououming/RM-radar/CameraClass/CameraClass.h
 ../Settings/Settings.hpp
 /home/zououming/RM-radar/Settings/Settings.hpp
@@ -76,10 +82,6 @@ stddef.h
 Windows.h
 -
 
-/home/zououming/RM-radar/ImageConsProd/ImageConsProd.cpp
-../ImageConsProd/ImageConsProd.h
-/home/zououming/RM-radar/ImageConsProd/ImageConsProd.h
-
 /home/zououming/RM-radar/ImageConsProd/ImageConsProd.h
 ../CameraClass/CameraClass.h
 /home/zououming/RM-radar/CameraClass/CameraClass.h
@@ -131,4 +133,28 @@ opencv2/core/core.hpp
 /home/zououming/RM-radar/Settings/opencv2/core/core.hpp
 string
 -
+
+/home/zououming/RM-radar/main.cpp
+ArmorDetector/YOLOv3Api.h
+/home/zououming/RM-radar/ArmorDetector/YOLOv3Api.h
+ImageConsProd/ImageConsProd.h
+/home/zououming/RM-radar/ImageConsProd/ImageConsProd.h
+
+/home/zououming/darknet/include/darknet.h
+stdlib.h
+-
+stdio.h
+-
+string.h
+-
+pthread.h
+-
+cuda_runtime.h
+/home/zououming/darknet/include/cuda_runtime.h
+curand.h
+/home/zououming/darknet/include/curand.h
+cublas_v2.h
+/home/zououming/darknet/include/cublas_v2.h
+cudnn.h
+/home/zououming/darknet/include/cudnn.h
 

@@ -150,6 +150,33 @@ ArmorDetector/ArmorDetector.cpp.s:
 	$(MAKE) -f CMakeFiles/RM_radar.dir/build.make CMakeFiles/RM_radar.dir/ArmorDetector/ArmorDetector.cpp.s
 .PHONY : ArmorDetector/ArmorDetector.cpp.s
 
+ArmorDetector/YOLOv3Api.o: ArmorDetector/YOLOv3Api.cpp.o
+
+.PHONY : ArmorDetector/YOLOv3Api.o
+
+# target to build an object file
+ArmorDetector/YOLOv3Api.cpp.o:
+	$(MAKE) -f CMakeFiles/RM_radar.dir/build.make CMakeFiles/RM_radar.dir/ArmorDetector/YOLOv3Api.cpp.o
+.PHONY : ArmorDetector/YOLOv3Api.cpp.o
+
+ArmorDetector/YOLOv3Api.i: ArmorDetector/YOLOv3Api.cpp.i
+
+.PHONY : ArmorDetector/YOLOv3Api.i
+
+# target to preprocess a source file
+ArmorDetector/YOLOv3Api.cpp.i:
+	$(MAKE) -f CMakeFiles/RM_radar.dir/build.make CMakeFiles/RM_radar.dir/ArmorDetector/YOLOv3Api.cpp.i
+.PHONY : ArmorDetector/YOLOv3Api.cpp.i
+
+ArmorDetector/YOLOv3Api.s: ArmorDetector/YOLOv3Api.cpp.s
+
+.PHONY : ArmorDetector/YOLOv3Api.s
+
+# target to generate assembly for a file
+ArmorDetector/YOLOv3Api.cpp.s:
+	$(MAKE) -f CMakeFiles/RM_radar.dir/build.make CMakeFiles/RM_radar.dir/ArmorDetector/YOLOv3Api.cpp.s
+.PHONY : ArmorDetector/YOLOv3Api.cpp.s
+
 CameraClass/CameraClass.o: CameraClass/CameraClass.cpp.o
 
 .PHONY : CameraClass/CameraClass.o
@@ -324,6 +351,9 @@ help:
 	@echo "... ArmorDetector/ArmorDetector.o"
 	@echo "... ArmorDetector/ArmorDetector.i"
 	@echo "... ArmorDetector/ArmorDetector.s"
+	@echo "... ArmorDetector/YOLOv3Api.o"
+	@echo "... ArmorDetector/YOLOv3Api.i"
+	@echo "... ArmorDetector/YOLOv3Api.s"
 	@echo "... CameraClass/CameraClass.o"
 	@echo "... CameraClass/CameraClass.i"
 	@echo "... CameraClass/CameraClass.s"

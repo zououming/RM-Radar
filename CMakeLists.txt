@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.7.1)
 project(RM_radar)
 
-set(CMAKE_CXX_STANDARD 14 )
-
+set(CMAKE_CXX_STANDARD 14)
 
 #set(CMAKE_BUILD_TYPE "Release")
 ## 添加c++ 11标准支持
 #set(CMAKE_CXX_FLAGS "-std=c++11 -O2")
-
 
 add_executable(RM_radar main.cpp
         CameraClass/DxImageProc.h
@@ -33,11 +31,21 @@ add_executable(RM_radar main.cpp
         Serial/serialport.h
         ImageConsProd/ImageConsProd.h
         ImageConsProd/ImageConsProd.cpp
+
+        ArmorDetector/YOLOv3Api.h
+        ArmorDetector/YOLOv3Api.cpp
         )
 
 target_link_libraries (RM_radar
         gxiapi
-        pthread)
+        pthread
+        /home/zououming/darknet/libdarknet.so
+        )
 
 find_package(OpenCV REQUIRED)
-target_link_libraries(RM_radar ${OpenCV_LIBS})
+INCLUDE_DIRECTORIES(/home/zououming/darknet/include)
+
+target_link_libraries(RM_radar
+        ${OpenCV_LIBS}
+        )
+

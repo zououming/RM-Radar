@@ -5,6 +5,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
   "/home/zououming/RM-radar/ArmorDetector/ArmorDetector.cpp" "/home/zououming/RM-radar/cmake-build-debug/CMakeFiles/RM_radar.dir/ArmorDetector/ArmorDetector.cpp.o"
+  "/home/zououming/RM-radar/ArmorDetector/YOLOv3Api.cpp" "/home/zououming/RM-radar/cmake-build-debug/CMakeFiles/RM_radar.dir/ArmorDetector/YOLOv3Api.cpp.o"
   "/home/zououming/RM-radar/CameraClass/CameraClass.cpp" "/home/zououming/RM-radar/cmake-build-debug/CMakeFiles/RM_radar.dir/CameraClass/CameraClass.cpp.o"
   "/home/zououming/RM-radar/ImageConsProd/ImageConsProd.cpp" "/home/zououming/RM-radar/cmake-build-debug/CMakeFiles/RM_radar.dir/ImageConsProd/ImageConsProd.cpp.o"
   "/home/zououming/RM-radar/Pose/AngleSolver.cpp" "/home/zououming/RM-radar/cmake-build-debug/CMakeFiles/RM_radar.dir/Pose/AngleSolver.cpp.o"
@@ -16,6 +17,7 @@ set(CMAKE_CXX_COMPILER_ID "GNU")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
+  "/home/zououming/darknet/include"
   "/usr/local/include/opencv"
   )
 

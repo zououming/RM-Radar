@@ -44,6 +44,7 @@
 				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
+					<Add directory="/home/zououming/darknet/include"/>
 					<Add directory="/usr/local/include/opencv"/>
 					<Add directory="/usr/include/c++/7"/>
 					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
@@ -68,6 +69,7 @@
 				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
+					<Add directory="/home/zououming/darknet/include"/>
 					<Add directory="/usr/local/include/opencv"/>
 					<Add directory="/usr/include/c++/7"/>
 					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
@@ -93,6 +95,12 @@
 			<Option target="RM_radar"/>
 		</Unit>
 		<Unit filename="/home/zououming/RM-radar/ArmorDetector/General.h">
+			<Option target="RM_radar"/>
+		</Unit>
+		<Unit filename="/home/zououming/RM-radar/ArmorDetector/YOLOv3Api.cpp">
+			<Option target="RM_radar"/>
+		</Unit>
+		<Unit filename="/home/zououming/RM-radar/ArmorDetector/YOLOv3Api.h">
 			<Option target="RM_radar"/>
 		</Unit>
 		<Unit filename="/home/zououming/RM-radar/ArmorDetector/opencv_extended.h">

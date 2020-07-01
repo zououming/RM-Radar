@@ -1,10 +1,10 @@
 #pragma once
-#include "Serial/serialport.h"
+#include "ArmorDetector/YOLOv3Api.h"
+//#include "Serial/serialport.h"
 #include "ImageConsProd/ImageConsProd.h"
 using namespace rm;
 
-//#define TEXT_PIC
-
+#define TEXT_PIC
 #ifdef TEXT_PIC
 int main(int argc, char * argv[]) {
     char * config_file_name = "../Settings/param_config.xml";
@@ -16,21 +16,21 @@ int main(int argc, char * argv[]) {
     image_cons_prod.ImageConsProd_init();
 
     image_cons_prod.armor_detector->setEnemyColor(BLUE);
-    string img_path = "/home/zououming/Pictures/hsv/";
+    string img_path = "/home/zououming/Traffic_model/hog_svm_data/TestData/";
     Mat img;
+    vector<Rect> box;
+    YOLOv3Api yolo;
     for( int i = 4; i <= 12; i++ ) {
-        string path = img_path + to_string(i) + ".png";
+        string path = img_path + to_string(i) + ".jpg";
         img = imread(path);
-        image_cons_prod.armor_detector->loadImg(img);
-        image_cons_prod.armor_detector->detect();
+        box = yolo.get_boxes(img);
+//        image_cons_prod.armor_detector->loadImg(img);
+//        image_cons_prod.armor_detector->detect();
     }
 }
 
-
 #else
 int main(int argc, char * argv[]) {
-
-
     char * config_file_name = "../Settings/param_config.xml";
     if (argc > 1)
         config_file_name = argv[1];
