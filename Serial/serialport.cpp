@@ -1,5 +1,5 @@
-
 #include "serialport.h"
+//using namespace std;
 
 /**
  *@brief   初始化数据

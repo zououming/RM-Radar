@@ -22,7 +22,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 using namespace cv;
-using namespace std;
 using namespace rm;
 
 #define ACQ_BUFFER_NUM          5               ///< Acquisition Buffer Qty./采集缓冲器数量
@@ -86,10 +85,9 @@ public:
     GX_STATUS emStatus;
     uint32_t ui32DeviceNum = 0;
 
-    Settings * settings;
-    OtherParam * other_param;
+    Settings *settings;
+    OtherParam *other_param;
     rm::ArmorDetector *armor_detector;
-
     rm::AngleSolver *_solverPtr;
 
     SerialPort _port;

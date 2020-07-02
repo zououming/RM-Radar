@@ -21,7 +21,7 @@
 //#include <opencv2/highgui.hpp>
 //#include <opencv2/imgproc.hpp>
 //using namespace cv;
-using namespace std;
+//using namespace std;
 
 
 #define TRUE 1

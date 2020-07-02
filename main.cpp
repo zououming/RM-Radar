@@ -1,31 +1,37 @@
 #pragma once
-#include "ArmorDetector/YOLOv3Api.h"
-//#include "Serial/serialport.h"
+#include "Serial/serialport.h"
 #include "ImageConsProd/ImageConsProd.h"
 using namespace rm;
 
 #define TEXT_PIC
 #ifdef TEXT_PIC
+using namespace std;
+
+class asd{
+public:
+    asd(){
+        printf("123321\n");
+    }
+};
+
 int main(int argc, char * argv[]) {
+    asd *a;
+    std::cout<<123<<endl;
     char * config_file_name = "../Settings/param_config.xml";
     Settings setting(config_file_name);
     OtherParam other_param;
-    CameraClass *cameraClass1=new CameraClass(&setting);
+    CameraClass *cameraClass1 = new CameraClass(&setting);
 
-    ImageConsProd image_cons_prod(&setting, &other_param,cameraClass1);
+    ImageConsProd image_cons_prod(&setting, &other_param, cameraClass1);
     image_cons_prod.ImageConsProd_init();
 
-    image_cons_prod.armor_detector->setEnemyColor(BLUE);
+    image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
     string img_path = "/home/zououming/Traffic_model/hog_svm_data/TestData/";
-    Mat img;
-    vector<Rect> box;
-    YOLOv3Api yolo;
     for( int i = 4; i <= 12; i++ ) {
         string path = img_path + to_string(i) + ".jpg";
-        img = imread(path);
-        box = yolo.get_boxes(img);
-//        image_cons_prod.armor_detector->loadImg(img);
-//        image_cons_prod.armor_detector->detect();
+        Mat img = imread(path);
+        image_cons_prod.armor_detector->loadImg(img);
+        image_cons_prod.armor_detector->detect();
     }
 }
 

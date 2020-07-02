@@ -18,10 +18,11 @@ void ImageConsProd::ImageConsProd_init() {
         return ;
     }
 #endif
-    this->cap->settings=this->settings;   //cap是一个相机类，这个类里面也有很多要用到setting的，所以要让相机里面本身的setting变成当前的xml
-    this->armor_detector=new ArmorDetector();
+    this->cap->settings = this->settings;   //cap是一个相机类，这个类里面也有很多要用到setting的，所以要让相机里面本身的setting变成当前的xml
+    this->armor_detector = this->cap->armor_detector;
+
     //Initialize angle solver
-    this->_solverPtr=new AngleSolver();
+    this->_solverPtr = this->cap->_solverPtr;
     AngleSolverParam angleParam;
     angleParam.readFile(9);
     this->_solverPtr->init(angleParam);
@@ -33,10 +34,10 @@ void ImageConsProd::ImageConsProd_init() {
 void ImageConsProd::ImageProducer() {
 #ifdef USE_VIDEO
     settings->save_result=0;
-    string video_name="/home/zououming/Videos/1.mp4";
+    std::string video_name="/home/zououming/Videos/1.mp4";
     Mat m_pss, src;
     Rect rec(200, 100, 1920-200-200, 1080-100-50);
-    cout <<rec.size()<<endl;
+    std::cout <<rec.size()<<std::endl;
     cap->m_p = &m_pss;
     time_t lInit;
     time_t lEnd;
@@ -54,7 +55,7 @@ void ImageConsProd::ImageProducer() {
             time(&lInit);
         }
         cap_video >> src;
-        cout<<src.size<<endl;
+        std::cout<<src.size<<std::endl;
         m_pss = src(rec);
         if(m_pss.data==NULL)
         {
@@ -159,13 +160,6 @@ void ImageConsProd::ImageProducer() {
 
 
 
-
-
-
-
-
-
-
 void ImageConsProd::ImageConsumer() {
     sleep(2);
     this->armor_detector->setEnemyColor(BLUE);
@@ -205,7 +199,7 @@ void ImageConsProd::ImageConsumer() {
             {
                 targetAngle =this-> _solverPtr->getCompensateAngle();
 
-                cout << "Deviation1: " << targetAngle << endl;
+                std::cout << "Deviation1: " << targetAngle << std::endl;
             }
 
         }
@@ -213,7 +207,7 @@ void ImageConsProd::ImageConsumer() {
         time (&lEnd);
         if (lEnd - lInit >= 1)
         {
-            cout<<"每秒"<<ui32FrameCount<<endl;
+            std::cout<<"每秒"<<ui32FrameCount<<std::endl;
             ui32FrameCount = 0;
         }
 

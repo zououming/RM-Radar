@@ -26,6 +26,7 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
 		BinYan Hu
 **************************************************************/
 #pragma once
+#include "../ArmorDetector/YOLOv3Api.h"
 #include<opencv2/opencv.hpp>
 #include<array>
 #include"General.h"
@@ -267,6 +268,8 @@ namespace rm
         *	flag for the detection result
         *	// 标记检测结果
         */
+        YOLOv3Api YOLOv3;
+
         enum ArmorFlag
         {
             ARMOR_NO = 0,		// not found			// 没有找到

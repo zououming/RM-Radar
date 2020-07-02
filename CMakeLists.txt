@@ -43,9 +43,14 @@ target_link_libraries (RM_radar
         )
 
 find_package(OpenCV REQUIRED)
+find_package(CUDA REQUIRED)
+
+set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
 INCLUDE_DIRECTORIES(/home/zououming/darknet/include)
+include_directories(${CUDA_INCLUDE_DIRS})
 
 target_link_libraries(RM_radar
         ${OpenCV_LIBS}
+        ${CUDA_LIBS}
         )
 

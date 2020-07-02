@@ -1,6 +1,6 @@
 #include "YOLOv3Api.h"
 using namespace cv;
-
+#include "cuda.h"
 YOLOv3Api::YOLOv3Api(){
     cfg_file = "/home/zououming/darknet/cfg/yolov3.cfg";
     weight_file = "/home/zououming/darknet/yolov3.weights";
@@ -23,8 +23,13 @@ YOLOv3Api::YOLOv3Api(){
 YOLOv3Api::~YOLOv3Api(){
     delete [] net;
 }
-
+#define USING_CUDA
 std::vector<cv::Rect> YOLOv3Api::get_boxes(cv::Mat &img){
+#ifdef USING_CUDA
+    cuda::GpuMat src, RGB;
+    src.upload(img);
+    cuda::cvtColor(src, RGB, cuda::COLOR_RGB2GRAY);
+#endif
     Mat rgb_img;
     cvtColor(img, rgb_img, cv::COLOR_BGR2RGB);
 
@@ -41,7 +46,7 @@ std::vector<cv::Rect> YOLOv3Api::get_boxes(cv::Mat &img){
     detection* det = get_network_boxes(net, rgb_img.cols, rgb_img.rows, thresh, 0.5, 0, 1, &box_num);
 
     if(nms)
-        do_nms_sort(det, box_num, class_num,nms);
+        do_nms_sort(det, box_num, class_num, nms);
 
     detect_boxes.clear();
 

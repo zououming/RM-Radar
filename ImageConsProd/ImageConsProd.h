@@ -11,11 +11,11 @@
 class ImageConsProd {
 public:
     ImageConsProd();
-    ImageConsProd(Settings * _settings,OtherParam *_otherParam,CameraClass *cap1)
+    ImageConsProd(Settings * _settings, OtherParam *_otherParam, CameraClass *cap1)
     {
         settings = _settings;
         cap = cap1;
-        otherParam=_otherParam;
+        otherParam = _otherParam;
     }
     void ImageProducer();
     void ImageConsumer();
@@ -24,7 +24,7 @@ public:
 
 public:
     OtherParam *otherParam;
-    Settings * settings;
+    Settings *settings;
     CameraClass *cap;
     rm::ArmorDetector *armor_detector;
     rm::AngleSolver *_solverPtr;

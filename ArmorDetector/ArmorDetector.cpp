@@ -241,30 +241,23 @@ namespace rm
         _roi = Rect(cv::Point(0, 0), _srcImg.size());
         _isTracking = false;
 
-
-
-
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
         _debugWindowName = "debug info";
 #endif // DEBUG_DETECTION || SHOW_RESULT
 
+        KF=new KalmanFilter(stateNum, measureNum, 0);
+        measurement=new Mat(cv::Mat::zeros(measureNum, 1, CV_32F));
+        KF->transitionMatrix = (Mat_<float>(stateNum, stateNum) << 1, 0, 1, 0,//A 状态转移矩阵
+                0, 1, 0, 1,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
+        //这里没有设置控制矩阵B，默认为零
 
-
-            KF=new KalmanFilter(stateNum, measureNum, 0);
-            measurement=new Mat(cv::Mat::zeros(measureNum, 1, CV_32F));
-            KF->transitionMatrix = (Mat_<float>(stateNum, stateNum) << 1, 0, 1, 0,//A 状态转移矩阵
-                    0, 1, 0, 1,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1);
-            //这里没有设置控制矩阵B，默认为零
-
-            setIdentity(KF->measurementMatrix);//H=[1,0,0,0;0,1,0,0] 测量矩阵
-            setIdentity(KF->processNoiseCov, Scalar::all(1e-5));//Q高斯白噪声，单位阵
-            setIdentity(KF->measurementNoiseCov, Scalar::all(1e-1));//R高斯白噪声，单位阵
-            setIdentity(KF->errorCovPost, Scalar::all(1));//P后验误差估计协方差矩阵，初始化为单位阵
-            randn(KF->statePost, Scalar::all(0), Scalar::all(0.1));//初始化状态为随机值
-
-
+        setIdentity(KF->measurementMatrix);//H=[1,0,0,0;0,1,0,0] 测量矩阵
+        setIdentity(KF->processNoiseCov, Scalar::all(1e-5));//Q高斯白噪声，单位阵
+        setIdentity(KF->measurementNoiseCov, Scalar::all(1e-1));//R高斯白噪声，单位阵
+        setIdentity(KF->errorCovPost, Scalar::all(1));//P后验误差估计协方差矩阵，初始化为单位阵
+        randn(KF->statePost, Scalar::all(0), Scalar::all(0.1));//初始化状态为随机值
     }
 
     ArmorDetector::ArmorDetector(const ArmorParam& armorParam)
@@ -321,6 +314,7 @@ namespace rm
         *	Detect lights and build light bars' desciptors
         */
         _armors.clear();
+        std::vector<cv::Rect> robot_box = YOLOv3.get_boxes(_roiImg);
 
         std::vector<rm::LightDescriptor> lightInfos;
         {

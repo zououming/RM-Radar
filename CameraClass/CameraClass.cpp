@@ -143,11 +143,11 @@ GX_STATUS CameraClass::cameraInit() {
 CameraClass::CameraClass(Settings * settings1) {
     this->emStatus = GX_STATUS_SUCCESS;
     //this->m_p=m_ps;
-    this->settings=settings1;
-    this->armor_detector=new ArmorDetector();
+    this->settings = settings1;
+    this->armor_detector = new ArmorDetector();
 
     //Initialize angle solver
-    this->_solverPtr=new AngleSolver();
+    this->_solverPtr = new AngleSolver();
     AngleSolverParam angleParam;
     angleParam.readFile(9);
     _solverPtr->init(angleParam);
@@ -337,8 +337,8 @@ void CameraClass::detectingThread() {
             {
                 targetAngle = _solverPtr->getCompensateAngle();
 
-                cout << "Deviation1: " << targetAngle << endl;
-                cout << "Distance:"<<_solverPtr->getDistance()<<endl;
+                std::cout << "Deviation1: " << targetAngle << std::endl;
+                std::cout << "Distance:"<<_solverPtr->getDistance() << std::endl;
 #ifndef SERIAL
                 vdata={targetAngle[0],targetAngle[1],(float)_solverPtr->getDistance(),0,1,0};
                 _port.TransformData(vdata);
@@ -351,7 +351,7 @@ void CameraClass::detectingThread() {
         time (&lEnd);
         if (lEnd - lInit >= 1)
         {
-            cout<<"每秒"<<ui32FrameCount<<endl;
+            std::cout<<"每秒"<<ui32FrameCount<<std::endl;
             ui32FrameCount = 0;
         }
 
