@@ -2,12 +2,12 @@
 #include "opencv2/opencv.hpp"
 #include "darknet.h"
 
-#define SHOW_BOX
+//#define SHOW_BOX
 
-class YOLOv3Api {
+class yoloApi {
 public:
-    YOLOv3Api();
-    ~YOLOv3Api();
+    yoloApi();
+    ~yoloApi();
     std::vector<cv::Rect> get_boxes(cv::Mat &img);
 
 private:

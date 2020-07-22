@@ -257,6 +257,7 @@ public:
 public:
     int show_image;
     int save_result;
+    int track_frame = 20;
     RuneParam rune;
     //rm::ArmorParam armor;
     int mode;

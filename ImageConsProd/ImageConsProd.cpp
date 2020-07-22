@@ -55,7 +55,6 @@ void ImageConsProd::ImageProducer() {
             time(&lInit);
         }
         cap_video >> src;
-        std::cout<<src.size<<std::endl;
         m_pss = src(rec);
         if(m_pss.data==NULL)
         {
@@ -159,7 +158,6 @@ void ImageConsProd::ImageProducer() {
 }
 
 
-
 void ImageConsProd::ImageConsumer() {
     sleep(2);
     this->armor_detector->setEnemyColor(BLUE);
@@ -185,24 +183,16 @@ void ImageConsProd::ImageConsumer() {
         }
         Mat src=*cap->m_p;
         this->armor_detector->loadImg(src);
-        //src=imread("/home/bazinga/CLionProjects/RM_nbut2020/1.jpg");
-        armorFlag=this->armor_detector->detect();
-        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
-        {
+        if(ui32FrameCount % this->settings->track_frame == 0)
+            this->armor_detector->find_robot();
+        else
+            this->armor_detector->track();
+//        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
+//        {
 //            this->armor_detector->Kalman4f();
-            armorVertex = this->armor_detector->getArmorVertex();
-            armorType = this->armor_detector->getArmorType();
-
-            this->_solverPtr->setTarget(armorVertex, armorType);
-            angleFlag = this->_solverPtr->solve();
-            if(angleFlag != rm::AngleSolver::ANGLE_ERROR)
-            {
-                targetAngle =this-> _solverPtr->getCompensateAngle();
-
-                std::cout << "Deviation1: " << targetAngle << std::endl;
-            }
-
-        }
+//            armorVertex = this->armor_detector->getArmorVertex();
+//            armorType = this->armor_detector->getArmorType();
+//        }
         ui32FrameCount++;
         time (&lEnd);
         if (lEnd - lInit >= 1)

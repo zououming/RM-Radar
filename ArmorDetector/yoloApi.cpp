@@ -1,7 +1,7 @@
-#include "YOLOv3Api.h"
+#include "yoloApi.h"
 using namespace cv;
-#include "cuda.h"
-YOLOv3Api::YOLOv3Api(){
+
+yoloApi::yoloApi(){
     cfg_file = "/home/zououming/darknet/cfg/yolov3.cfg";
     weight_file = "/home/zououming/darknet/yolov3.weights";
     class_file = "/home/zououming/darknet/data/coco.names";
@@ -20,16 +20,11 @@ YOLOv3Api::YOLOv3Api(){
     set_batch_network(net, 1);
 }
 
-YOLOv3Api::~YOLOv3Api(){
+yoloApi::~yoloApi(){
     delete [] net;
 }
-#define USING_CUDA
-std::vector<cv::Rect> YOLOv3Api::get_boxes(cv::Mat &img){
-#ifdef USING_CUDA
-    cuda::GpuMat src, RGB;
-    src.upload(img);
-    cuda::cvtColor(src, RGB, cuda::COLOR_RGB2GRAY);
-#endif
+
+std::vector<cv::Rect> yoloApi::get_boxes(cv::Mat &img){
     Mat rgb_img;
     cvtColor(img, rgb_img, cv::COLOR_BGR2RGB);
 
@@ -75,10 +70,11 @@ std::vector<cv::Rect> YOLOv3Api::get_boxes(cv::Mat &img){
     free_detections(det, box_num);
 
 #ifdef SHOW_BOX
+    std::cout << detect_boxes.size() << std::endl;
     for (auto &box : detect_boxes)
         rectangle(img, box, Scalar(0, 255, 0), 1);
-    imshow("show_bos", img);
-    waitKey();
+    imshow("show_box", img);
+    waitKey(1);
 #endif
 
     delete [] src_img;
@@ -86,7 +82,7 @@ std::vector<cv::Rect> YOLOv3Api::get_boxes(cv::Mat &img){
     return detect_boxes;
 }
 
-void YOLOv3Api::img_convert(const cv::Mat &img, float *dst){
+void yoloApi::img_convert(const cv::Mat &img, float *dst){
     uchar* data = img.data;
 
     for(int k = 0; k < img.channels(); k++)
@@ -95,7 +91,7 @@ void YOLOv3Api::img_convert(const cv::Mat &img, float *dst){
                 dst[k * img.cols * img.rows + i * img.cols + j] = data[(i * img.cols+j) * img.channels() + k]/255.;
 }
 
-void YOLOv3Api::img_resize(float *src, float *dst, int srcWidth, int srcHeight, int dstWidth, int dstHeight){
+void yoloApi::img_resize(float *src, float *dst, int srcWidth, int srcHeight, int dstWidth, int dstHeight){
     int new_w = srcWidth;
     int new_h = srcHeight;
     if (((float)dstWidth / srcWidth) < ((float)dstHeight / srcHeight)) {
@@ -123,7 +119,7 @@ void YOLOv3Api::img_resize(float *src, float *dst, int srcWidth, int srcHeight, 
     delete [] ImReInner;
 }
 
-void YOLOv3Api::resize_inner(float *src, float *dst, int srcWidth, int srcHeight, int dstWidth, int dstHeight){
+void yoloApi::resize_inner(float *src, float *dst, int srcWidth, int srcHeight, int dstWidth, int dstHeight){
     size_t sizePa = dstWidth * srcHeight * 3 * sizeof(float);
     auto * part = new float[sizePa];
 

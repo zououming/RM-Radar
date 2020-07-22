@@ -7,16 +7,7 @@ using namespace rm;
 #ifdef TEXT_PIC
 using namespace std;
 
-class asd{
-public:
-    asd(){
-        printf("123321\n");
-    }
-};
-
 int main(int argc, char * argv[]) {
-    asd *a;
-    std::cout<<123<<endl;
     char * config_file_name = "../Settings/param_config.xml";
     Settings setting(config_file_name);
     OtherParam other_param;
@@ -26,13 +17,14 @@ int main(int argc, char * argv[]) {
     image_cons_prod.ImageConsProd_init();
 
     image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
-    string img_path = "/home/zououming/Traffic_model/hog_svm_data/TestData/";
-    for( int i = 4; i <= 12; i++ ) {
-        string path = img_path + to_string(i) + ".jpg";
-        Mat img = imread(path);
+    string img_path = "/home/zououming/darknet/data/person.jpg";
+//    for( int i = 4; i <= 12; i++ ) {
+//        string path = img_path + to_string(i) + ".jpg";
+        Mat img = imread(img_path);
         image_cons_prod.armor_detector->loadImg(img);
-        image_cons_prod.armor_detector->detect();
-    }
+        image_cons_prod.armor_detector->YOLOv3.get_boxes(img);
+        cv::waitKey(0);
+//    }
 }
 
 #else

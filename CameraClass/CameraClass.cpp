@@ -324,7 +324,7 @@ void CameraClass::detectingThread() {
         Mat src=*m_p;
         this->armor_detector->loadImg(src);
         //src=imread("/home/bazinga/CLionProjects/RM_nbut2020/1.jpg");
-        armorFlag=this->armor_detector->detect();
+//        armorFlag=this->armor_detector->detect();
         if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
         {
 //            this->armor_detector->Kalman4f();

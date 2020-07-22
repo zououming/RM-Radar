@@ -26,8 +26,9 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
 		BinYan Hu
 **************************************************************/
 #pragma once
-#include "../ArmorDetector/YOLOv3Api.h"
+#include "../ArmorDetector/yoloApi.h"
 #include<opencv2/opencv.hpp>
+#include<opencv2/tracking.hpp>
 #include<array>
 #include"General.h"
 #include<opencv2/ml.hpp>
@@ -188,6 +189,18 @@ namespace rm
     };
 
     /*
+    * 	@Brief： This structure describes the team, unit, and location of the robot
+    *	// 这个结构体描述机器人的队伍,兵种,位置等
+    */
+    struct RobotDescriptor
+    {
+        int team;
+        std::string arms;
+        Rect2d position;
+    };
+
+
+    /*
     * 	@Brief： This class describes the armor information, including maximum bounding box, vertex and so on
     *	// 这个类描述装甲信息，包括最大边界框、顶点等等
     */
@@ -232,7 +245,7 @@ namespace rm
         *	// 输入: 感兴趣区域的灰度图
         *	@Outputs: store the front img to ArmorDescriptor's public
         */
-        void getFrontImg(const cv::Mat& grayImg);
+        Mat getFrontImg(const cv::Mat& grayImg);
 
         /*
         *	@Return: if the centeral pattern belong to an armor
@@ -268,7 +281,7 @@ namespace rm
         *	flag for the detection result
         *	// 标记检测结果
         */
-        YOLOv3Api YOLOv3;
+        yoloApi YOLOv3;
 
         enum ArmorFlag
         {
@@ -310,6 +323,14 @@ namespace rm
         void loadImg(const cv::Mat& srcImg);
 
         /*
+        *	@Brief: Find all robots using the yolo algorithm interface
+        *	@Outputs: ALL the info of detection result
+        *	@Return: void
+        *	@Others: API for client
+        */
+        void find_robot();
+
+        /*
         *	@Brief: core of detection algrithm, include all the main detection process
         *			// 检测算法的核心，包括所有主要的检测过程
         *	@Outputs: ALL the info of detection result
@@ -317,7 +338,19 @@ namespace rm
         *	@Return: See enum ArmorFlag
         *	@Others: API for client
         */
-        int detect();
+        int detect(const cv::Rect &robot);
+
+        std::string armsClassification(const cv::Mat &roiImg);
+
+        /*
+        *	@Brief: core of detection algrithm, include all the main detection process
+        *			// 检测算法的核心，包括所有主要的检测过程
+        *	@Outputs: ALL the info of detection result
+        *			// 所有检测结果的信息
+        *	@Return: See enum ArmorFlag
+        *	@Others: API for client
+        */
+        int track();
 
         /*
         *	@Brief: get the vertex of armor
@@ -359,6 +392,13 @@ namespace rm
         int _trackCnt = 0;						// 跟踪数：0 ？
 
         std::vector<ArmorDescriptor> _armors;	// 装甲板
+        std::vector<cv::Rect> YOLO_box;        // 存放yolo识别到的机器人位置
+        std::vector<RobotDescriptor> robot_box;
+
+        Ptr<ml::SVM> svm;
+        Ptr<cv::MultiTracker> trackers;
+
+        std::string armsList[7] = {"zero", "hero", "engineering", "infantry1", "infantry2", "infantry3", "Drone"};
 
         ArmorDescriptor _targetArmor; //relative coordinates
 
@@ -380,6 +420,7 @@ namespace rm
         int upper_red_hsv[3] = {180, 255, 255};
         int red_H[2] = {0, 10};
         int kernel_size[2] = {3, 3};   //dilate_size erode_size
+
 
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
         std::string _debugWindowName;
