@@ -199,9 +199,8 @@ void ImageConsProd::ImageConsumer() {
         this->armor_detector->loadImg(src);
         if(ui32FrameCount % this->settings->track_frame == 0)
             this->armor_detector->find_robot();
-        else
-            this->armor_detector->track();
 
+        this->armor_detector->track();
         writer << armor_detector->getLastImg();
         this->showImg();
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
