@@ -1,8 +1,5 @@
-//
-// Created by shady on 19-11-19.
-//
-
 #include "../ImageConsProd/ImageConsProd.h"
+
 #define USE_VIDEO
 
 void ImageConsProd::ImageConsProd_init() {
@@ -22,22 +19,23 @@ void ImageConsProd::ImageConsProd_init() {
     this->armor_detector = this->cap->armor_detector;
 
     //Initialize angle solver
-    this->_solverPtr = this->cap->_solverPtr;
-    AngleSolverParam angleParam;
-    angleParam.readFile(9);
-    this->_solverPtr->init(angleParam);
-    this->_solverPtr->setResolution();
-    this->_solverPtr->initset(this->settings);
+//    this->_solverPtr = this->cap->_solverPtr;
+//    AngleSolverParam angleParam;
+//    angleParam.readFile(9);
+//    this->_solverPtr->init(angleParam);
+//    this->_solverPtr->setResolution();
+//    this->_solverPtr->initset(this->settings);
     //_solverPtr->setResolution(_videoCapturePtr->getResolution());
 
 }
 void ImageConsProd::ImageProducer() {
+    std::cout << "start image producer" << std::endl;
 #ifdef USE_VIDEO
     settings->save_result=0;
     std::string video_name="/home/zououming/Videos/1.mp4";
     Mat m_pss, src;
-    Rect rec(200, 100, 1920-200-200, 1080-100-50);
-    std::cout <<rec.size()<<std::endl;
+//    Rect rec(200, 100, 1920-200-200, 1080-100-50);
+//    std::cout <<rec.size()<<std::endl;
     cap->m_p = &m_pss;
     time_t lInit;
     time_t lEnd;
@@ -45,20 +43,21 @@ void ImageConsProd::ImageProducer() {
     uint32_t ui32AcqFrameRate = 0;
     VideoCapture cap_video(video_name);
     if(!cap_video.isOpened())
-    {
         return;
-    }
-    while(1)
+    while (true)
     {
         if(!ui32FrameCount)
-        {
             time(&lInit);
-        }
+
         cap_video >> src;
-        m_pss = src(rec);
-        if(m_pss.data==NULL)
-        {
-           continue;
+        this->mutex->lock();
+        m_pss = src;
+        this->mutex->unlock();
+//        m_pss = src(rec);
+//        m_pss = src;
+        if(src.data == NULL) {
+            std::cout << "null" << std::endl;
+            break;
         }
     }
 #else
@@ -159,7 +158,7 @@ void ImageConsProd::ImageProducer() {
 
 
 void ImageConsProd::ImageConsumer() {
-    sleep(2);
+    sleep(1);
     this->armor_detector->setEnemyColor(BLUE);
     //Mat src;
 
@@ -176,17 +175,35 @@ void ImageConsProd::ImageConsumer() {
     uint32_t ui32AcqFrameRate = 0;
     std::vector<cv::Point2f> armorVertex;
     time(&lInit);
-    for(;;){
-        if(!ui32FrameCount)
-        {
-            time(&lInit);
+
+    Mat src;
+    std::string video_name="/home/zououming/Videos/1.mp4";
+    VideoCapture cap_video(video_name);
+    VideoWriter writer("VideoTest.avi", CV_FOURCC('M', 'J', 'P', 'G'), 25.0, Size(1280, 720));
+
+    while (true)
+    {
+        cap_video >> src;
+
+//        this->mutex->lock();
+//        Mat src = cap->m_p->clone();
+//        std::cout << "deal" << std::endl;
+//        this->mutex->unlock();
+
+        if (src.data == NULL){
+            std::cout << "break" << std::endl;
+            break;
         }
-        Mat src=*cap->m_p;
+        if(!ui32FrameCount)
+            time(&lInit);
         this->armor_detector->loadImg(src);
         if(ui32FrameCount % this->settings->track_frame == 0)
             this->armor_detector->find_robot();
         else
             this->armor_detector->track();
+
+        writer << armor_detector->getLastImg();
+        this->showImg();
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
 //        {
 //            this->armor_detector->Kalman4f();
@@ -197,12 +214,10 @@ void ImageConsProd::ImageConsumer() {
         time (&lEnd);
         if (lEnd - lInit >= 1)
         {
-            std::cout<<"每秒"<<ui32FrameCount<<std::endl;
-            ui32FrameCount = 0;
+//            std::cout<<"每秒"<<ui32FrameCount<<std::endl;
+//            ui32FrameCount = 0;
         }
 
-        //cout << "Deviation: " << targetAngle << endl;
-        //cout<<i<<endl;
 #ifndef SHOW
         //        if (i){
             imshow("11",src);
@@ -210,6 +225,12 @@ void ImageConsProd::ImageConsumer() {
 //        }
 #endif
     }
+}
+
+void ImageConsProd::showImg() {
+    Mat img = armor_detector->getLastImg();
+    imshow("last img", img);
+    waitKey(1);
 }
 
 #ifndef SHOW

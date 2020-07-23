@@ -147,11 +147,11 @@ CameraClass::CameraClass(Settings * settings1) {
     this->armor_detector = new ArmorDetector();
 
     //Initialize angle solver
-    this->_solverPtr = new AngleSolver();
-    AngleSolverParam angleParam;
-    angleParam.readFile(9);
-    _solverPtr->init(angleParam);
-    _solverPtr->setResolution();
+//    this->_solverPtr = new AngleSolver();
+//    AngleSolverParam angleParam;
+//    angleParam.readFile(9);
+//    _solverPtr->init(angleParam);
+//    _solverPtr->setResolution();
 
 }
 

@@ -188,7 +188,7 @@ namespace rm
         cv::warpPerspective(grayImg, frontImg, perspMat, Size(width, height));
 //        int name_cont = rand();
 //        cv::imwrite("/home/zououming/Pictures/train/"+to_string(name_cont)+".png", frontImg);
-        cv::imshow("frontImg", frontImg);
+//        cv::imshow("frontImg", frontImg);
         cv::waitKey(1);
         return frontImg;
     }
@@ -242,8 +242,8 @@ namespace rm
         _roi = Rect(cv::Point(0, 0), _srcImg.size());
         _isTracking = false;
 
+        YOLOv3 = new yoloApi();
         svm = StatModel::load<SVM>("../ArmorDetector/svm_arms.xml");
-        trackers = MultiTracker::create();
 
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
         _debugWindowName = "debug info";
@@ -315,91 +315,47 @@ namespace rm
     {
         YOLO_box.clear();
         robot_box.clear();
-        trackers->clear();
+        trackers = MultiTracker::create();
 
-        YOLO_box = YOLOv3.get_boxes(_srcImg);
-        for (auto &robot_rect : YOLO_box)
-            detect(robot_rect);
+        YOLO_box = YOLOv3->get_boxes(_srcImg);
+        cout<<"find:"<<YOLO_box.size()<<endl;
+        for (auto &robot_rect : YOLO_box) {
+            RobotDescriptor robot = detect(robot_rect);
+            robot_box.emplace_back(robot);
+            trackers->add(cv::TrackerKCF::create(), _srcImg, robot.position);
+        }
     }
 
-    int ArmorDetector::detect(const cv::Rect &robot_rect)
+    RobotDescriptor ArmorDetector::detect(const cv::Rect &robot_rect)
     {
+        RobotDescriptor this_robot{rm::GREEN, "?", robot_rect};
         cv::Mat armorImg;
-        int color;
-        string arms;
 
         std::vector<rm::LightDescriptor> lightInfos;
         {
-            cv::Mat binBrightImg, hsvImg, robotImg;//二值化
+            cv::Mat binBrightImg, robotImg;//二值化
+            cv::Mat element, erode_element, dilate_element;
+            int threshold = _param.brightness_threshold;
             robotImg = _srcImg(robot_rect);
-            cvtColor(robotImg, hsvImg, COLOR_BGR2HSV);
             cvtColor(robotImg, _grayImg, COLOR_BGR2GRAY, 1);
 
-            Scalar hsv_lower, hsv_upper;
-            int lower[3], upper[3];
-            if (_enemy_color == BLUE)
-                for (int i = 0; i < 3; i++) {
-                    hsv_lower(i) = lower_blue_hsv[i];
-                    hsv_upper(i) = upper_blue_hsv[i];
-                    lower[i] = lower_blue_hsv[i];
-                    upper[i] = upper_blue_hsv[i];
-                }
-            else
-                for (int i = 0; i < 3; i++) {
-                    hsv_lower(i) = lower_red_hsv[i];
-                    hsv_upper(i) = upper_red_hsv[i];
-                    lower[i] = lower_red_hsv[i];
-                    upper[i] = upper_red_hsv[i];
-                }
-            Mat element = getStructuringElement(MORPH_ELLIPSE, cv::Size(3, 3));
-            Mat dilate_element = getStructuringElement(MORPH_ELLIPSE, cv::Size(3, 3));
-            Mat erode_element = getStructuringElement(MORPH_ELLIPSE, cv::Size(3, 3));
-
-#ifdef DEBUG_HSV
+#ifdef DEBUG_THRESHOLD
             {
-                string adjust_window = "adjust HSV";
+                string adjust_window = "adjust threshold";
                 namedWindow(adjust_window);
 
-                createTrackbar("lower H", adjust_window, &lower[0], 180);
-                createTrackbar("lower S", adjust_window, &lower[1], 255);
-                createTrackbar("lower V", adjust_window, &lower[2], 255);
-                createTrackbar("upper H", adjust_window, &upper[0], 180);
-                createTrackbar("upper S", adjust_window, &upper[1], 255);
-                createTrackbar("upper V", adjust_window, &upper[2], 255);
+                createTrackbar("threshold", adjust_window, &threshold, 255);
 
                 createTrackbar("dilate size", adjust_window, &kernel_size[0], 20);
                 createTrackbar("erode size", adjust_window, &kernel_size[1], 20);
 
                 while (1) {
-                    hsv_lower(0) = getTrackbarPos("lower H", adjust_window);
-                    hsv_lower(1) = getTrackbarPos("lower S", adjust_window);
-                    hsv_lower(2) = getTrackbarPos("lower V", adjust_window);
-                    hsv_upper(0) = getTrackbarPos("upper H", adjust_window);
-                    hsv_upper(1) = getTrackbarPos("upper S", adjust_window);
-                    hsv_upper(2) = getTrackbarPos("upper V", adjust_window);
-
-                    if(_enemy_color == BLUE)
-                        for ( int i = 0; i < 3; i++ ) {
-                            lower_blue_hsv[i] = hsv_lower(i);
-                            upper_blue_hsv[i] = hsv_upper(i);
-                        }
-                    else
-                        for ( int i = 0; i < 3; i++ ) {
-                            lower_red_hsv[i] = hsv_lower(i);
-                            upper_red_hsv[i] = hsv_upper(i);
-                        }
-
+                    threshold = getTrackbarPos("threshold", adjust_window);
                     kernel_size[0] = getTrackbarPos("dilate size", adjust_window);
                     kernel_size[1] = getTrackbarPos("erode size", adjust_window);
 
-                    inRange(hsvImg, hsv_lower, hsv_upper, binBrightImg);
-                    if (_enemy_color == RED) {
-                        Mat red;
-                        hsv_lower(0) = red_H[0];
-                        hsv_upper(0) = red_H[1];
-                        inRange(hsvImg, hsv_lower, hsv_upper, red);
-                        bitwise_or(red, binBrightImg, binBrightImg);
-                    }
+                    cvtColor(_roiImg, _grayImg, COLOR_BGR2GRAY, 1);
+                    cv::threshold(_grayImg, binBrightImg, threshold, 255, cv::THRESH_BINARY);
 
                     if (kernel_size[1] >= 3) {
                         erode_element = getStructuringElement(MORPH_ELLIPSE, Size(kernel_size[1], kernel_size[1]));
@@ -409,51 +365,9 @@ namespace rm
                         dilate_element = getStructuringElement(MORPH_ELLIPSE, Size(kernel_size[0], kernel_size[0]));
                         dilate(binBrightImg, binBrightImg, dilate_element);
                     }
-                    imshow("hsv", binBrightImg);
 
-                    vector<RotatedRect> lightsRecs;
-                    vector<vector<Point>> lightContours;                    // 寻找轮廓
-                    cv::findContours(binBrightImg.clone(), lightContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-                    for (const auto &contour : lightContours) {
-                        float lightContourArea = contourArea(contour);        // 面积判断
-                        if (contour.size() <= 5 ||
-                            lightContourArea < _param.light_min_area)
-                            continue;
+                    imshow("binBrightImg", binBrightImg);
 
-                        RotatedRect lightRec = fitEllipse(contour);
-                        adjustRec(lightRec, ANGLE_TO_UP);
-
-                        //float solidity = lightContourArea / lightRec.size.area();
-                        if (lightRec.size.width / lightRec.size.height > _param.light_max_ratio ||
-                            lightContourArea / lightRec.size.area() < _param.light_contour_min_solidity)
-                            continue;    // 长宽比判断
-
-                        //Mat temp;
-                        //cvex::showRectangle("light_right_position", _srcImg, temp, lightRec, cvex::GREEN,0, _roi.tl());
-
-                        lightRec.size.width *= _param.light_color_detect_extend_ratio;
-                        lightRec.size.height *= _param.light_color_detect_extend_ratio;
-                        Rect lightRect = lightRec.boundingRect();
-
-                        const Rect srcBound(Point(0, 0), _roiImg.size());
-                        lightRect &= srcBound;
-                        Mat lightImg = _roiImg(lightRect);
-                        Mat lightMask = Mat::zeros(lightRect.size(), CV_8UC1);
-                        Point2f lightVertexArray[4];//tuoyuan 4个顶点
-                        lightRec.points(lightVertexArray);
-                        std::vector<Point> lightVertex;
-                        for (int i = 0; i < 4; i++) {
-                            lightVertex.emplace_back(Point(lightVertexArray[i].x - lightRect.tl().x,
-                                                           lightVertexArray[i].y - lightRect.tl().y));
-                        }
-                        fillConvexPoly(lightMask, lightVertex, 255);
-                        if (lightImg.size().area() <= 0 || lightMask.size().area() <= 0) continue;
-                        cv::dilate(lightMask, lightMask, element);
-//                        lightInfos.push_back(LightDescriptor(lightRec));
-                        lightsRecs.emplace_back(lightRec);
-                    }
-                    Mat debug = _srcImg.clone();
-                    cvex::showRectangles("light", debug, debug  , lightsRecs, cvex::MAGENTA, -1, _roi.tl());
                     int Key = waitKey(1);
                     if (Key == 27) {
                         destroyWindow(adjust_window);
@@ -461,23 +375,12 @@ namespace rm
                     }
                 }
             }
-#else
-            inRange(hsvImg, hsv_lower, hsv_upper, binBrightImg);
-            if (_enemy_color == RED) {
-                Mat red;
-                hsv_lower(0) = red_H[0];
-                hsv_upper(0) = red_H[1];
-                inRange(hsvImg, hsv_lower, hsv_upper, red);
-                bitwise_or(red, binBrightImg, binBrightImg);
-            }
 #endif
+            cvtColor(_roiImg, _grayImg, COLOR_BGR2GRAY, 1);
+            cv::threshold(_grayImg, binBrightImg, _param.brightness_threshold, 255, cv::THRESH_BINARY);
 
-            //            cvtColor(_roiImg, _grayImg, COLOR_BGR2GRAY, 1);
-            //            cv::threshold(_grayImg, binBrightImg, _param.brightness_threshold, 255, cv::THRESH_BINARY);
-            //
-            //            cv::Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));//tuoyuan
-            //            dilate(binBrightImg, binBrightImg, element);
-
+            element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));//tuoyuan
+            dilate(binBrightImg, binBrightImg, element);
 #ifdef DEBUG_PRETREATMENT
             imshow("brightness_binary", binBrightImg);
             waitKey();
@@ -523,28 +426,32 @@ namespace rm
                 }
                 fillConvexPoly(lightMask, lightVertex, 255);
 
-                lightInfos.push_back(LightDescriptor(lightRec));
+//                lightInfos.push_back(LightDescriptor(lightRec));
 
-//                    if (lightImg.size().area() <= 0 || lightMask.size().area() <= 0) continue;
-//                    cv::dilate(lightMask, lightMask, element);
-//                    const Scalar meanVal = mean(lightImg, lightMask);
+                    if (lightImg.size().area() <= 0 || lightMask.size().area() <= 0) continue;
+                    cv::dilate(lightMask, lightMask, element);
+                    const Scalar meanVal = mean(lightImg, lightMask);
 
-                //Mat debugColorImg = _srcImg.clone();
-                //const String BGR = "(" + std::to_string(int(meanVal[0])) + ", " + std::to_string(int(meanVal[1])) + ", " + std::to_string(int(meanVal[2])) + ")";
+                Mat debugColorImg = _srcImg.clone();
+                const String BGR = "(" + std::to_string(int(meanVal[0])) + ", " + std::to_string(int(meanVal[1])) + ", " + std::to_string(int(meanVal[2])) + ")";
 
-//                    if (((_enemy_color == BLUE) && (meanVal[BLUE] - meanVal[RED] > 20.0)) || (_enemy_color == RED && meanVal[RED] - meanVal[BLUE] > 20.0))
-//                    {
-//                        lightInfos.push_back(LightDescriptor(lightRec));
-//
-//                        //putText(debugColorImg, BGR, Point(lightVertexArray[0]) + _roi.tl(), FONT_HERSHEY_SIMPLEX, 0.4, cvex::GREEN, 1); //fontScalar 0.34
-//                    }
+                    if (meanVal[BLUE] - meanVal[RED] > 20.0) //|| (_enemy_color == RED && meanVal[RED] - meanVal[BLUE] > 20.0))
+                    {
+                        this_robot.team = rm::BLUE;
+                        lightInfos.emplace_back(LightDescriptor(lightRec));
+                        //putText(debugColorImg, BGR, Point(lightVertexArray[0]) + _roi.tl(), FONT_HERSHEY_SIMPLEX, 0.4, cvex::GREEN, 1); //fontScalar 0.34
+                    }
+                    else if (meanVal[RED] - meanVal[BLUE] > 20.0)
+                    {
+                        this_robot.team = rm::RED;
+                        lightInfos.emplace_back(LightDescriptor(lightRec));
+                    }
                 //else
                 //{
                 //	putText(debugColorImg, BGR, Point(lightVertexArray[0]) + _roi.tl(), FONT_HERSHEY_SIMPLEX, 0.4, cvex::CYAN, 1); //fontScalar 0.34
                 //}
                 //imshow("BGR", debugColorImg);
                 //waitKey(0);
-
             }
 
 #ifdef DEBUG_DETECTION
@@ -648,13 +555,6 @@ namespace rm
 #endif //  DEBUG_DETECTION
         }
 
-//        if (_armors.empty()) {
-////                cout << "ARMOR_NO!!!" << endl;
-////                cv::imshow(_debugWindowName, _debugImg);
-////                cv::waitKey(1);
-//            return _flag = ARMOR_NO;
-//        }
-
 #ifdef GET_ARMOR_PIC
         _allCnt++;
         int i = 0;
@@ -674,37 +574,18 @@ namespace rm
             return !(i.isArmorPattern());
         }), _armors.end());
 
-        if (_armors.empty()) {
-            _targetArmor.clear();
-            arms = "?";
+
+        if (_armors.empty())
+            this_robot.arms = "?";
+        else if (_armors.size() > 0) {
+            _targetArmor = _armors[0];
+            Pre_GetCenter();
+            Rect armorRect = cv::boundingRect(_targetArmor.vertex);
+            armorImg = _grayImg(armorRect);
+            this_robot.arms = armsClassification(armorImg);
         }
 
-
-        //calculate the final score
-        for (auto &armor : _armors) {
-            armor.finalScore = armor.sizeScore + armor.distScore + armor.rotationScore;
-        }
-
-        //choose the one with highest score, store it on _targetArmor
-        std::sort(_armors.begin(), _armors.end(), [](const ArmorDescriptor &a, const ArmorDescriptor &b) {
-            return a.finalScore > b.finalScore;
-        });
-
-        //Kalman4f();
-        //update the flag status
         _trackCnt++;
-        Pre_GetCenter();
-
-        _targetArmor = _armors[0];
-        Rect armorRect = cv::boundingRect(_targetArmor.vertex);
-        armorImg = _srcImg(armorRect);
-        arms = armsClassification(armorImg);
-
-        RobotDescriptor this_robot {color, arms, robot_rect};
-        robot_box.emplace_back(this_robot);
-
-        Rect2d robot_rect_2d = robot_rect;
-        trackers->add(cv::TrackerKCF::create(), _srcImg, robot_rect_2d);
 
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
         Pre_GetViex();
@@ -712,7 +593,7 @@ namespace rm
 //        cv::waitKey(0);
 #endif //DEBUG_DETECTION || SHOW_RESULT
 
-        return _flag = ARMOR_LOCAL;
+        return this_robot;
     }
 
     std::string ArmorDetector::armsClassification(const cv::Mat &roiImg)
@@ -722,28 +603,46 @@ namespace rm
 //                regulatedImg = frontImg(Rect(21, 0, 50, 50));
 //            else
         regulatedImg = roiImg.clone();
-
-//        resize(regulatedImg, regulatedImg, Size(regulatedImg.size().width / 2, regulatedImg.size().height / 2));
+        threshold(regulatedImg, regulatedImg, 100, 255, THRESH_OTSU);
         resize(regulatedImg, regulatedImg, Size(25, 25));
+        Mat data = regulatedImg.reshape(1, 1);
 
-        Mat temp;
-        regulatedImg.copyTo(temp);
-        Mat data = temp.reshape(1, 1);
-
-        data.convertTo(data, CV_32FC1);
+        data.convertTo(data, CV_32FC2);
 
         int result = (int)svm->predict(data);
         return armsList[result];
     }
 
 
-    int ArmorDetector::track()
-    {
+    int ArmorDetector::track() {
         trackers->update(_srcImg);
+        _roiImg = _srcImg.clone();
+        vector<Rect_<double>> new_position = trackers->getObjects();
 
-        for (const auto & rect : trackers->getObjects())
-            rectangle(_srcImg, rect, rm::GREEN, 2, 1);
-        cv::imshow("1", _srcImg);
+        cv::Scalar line_color(0, 0, 0);
+        string team, text;
+        for (int i = 0; i < robot_box.size(); i++) {
+            robot_box[i].position = new_position[i];
+            line_color = robot_box[i].team == rm::RED ? cvex::RED : cvex::BLUE;
+            team = robot_box[i].team == rm::RED ? "red" : "blue";
+            if (robot_box[i].team == rm::GREEN) {
+                line_color = cvex::GREEN;
+                team = "green";
+            }
+
+            text = team + " " + robot_box[i].arms;
+            rectangle(_roiImg, robot_box[i].position, line_color, 2, 1);
+
+            Point text_point(int(robot_box[i].position.x), int(robot_box[i].position.y - 2));
+            putText(_roiImg, text, text_point, FONT_HERSHEY_SIMPLEX, 0.8, line_color, 2);
+        }
+
+//        imshow("last_img", _roiImg);
+//        waitKey(1);
+    }
+
+    Mat ArmorDetector::getLastImg() {
+        return _roiImg;
     }
 
     void ArmorDetector::Kalman4f() {

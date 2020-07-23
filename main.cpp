@@ -3,7 +3,7 @@
 #include "ImageConsProd/ImageConsProd.h"
 using namespace rm;
 
-#define TEXT_PIC
+//#define TEXT_PIC
 #ifdef TEXT_PIC
 using namespace std;
 
@@ -11,19 +11,30 @@ int main(int argc, char * argv[]) {
     char * config_file_name = "../Settings/param_config.xml";
     Settings setting(config_file_name);
     OtherParam other_param;
-    CameraClass *cameraClass1 = new CameraClass(&setting);
 
+    CameraClass *cameraClass1 = new CameraClass(&setting);
     ImageConsProd image_cons_prod(&setting, &other_param, cameraClass1);
     image_cons_prod.ImageConsProd_init();
 
     image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
-    string img_path = "/home/zououming/darknet/data/person.jpg";
 //    for( int i = 4; i <= 12; i++ ) {
 //        string path = img_path + to_string(i) + ".jpg";
-        Mat img = imread(img_path);
-        image_cons_prod.armor_detector->loadImg(img);
-        image_cons_prod.armor_detector->YOLOv3.get_boxes(img);
-        cv::waitKey(0);
+
+    Mat img = imread("/home/zououming/darknet/data/person.jpg");
+    image_cons_prod.armor_detector->loadImg(img);
+    image_cons_prod.armor_detector->find_robot();
+    image_cons_prod.armor_detector->track();
+
+    img = imread("/home/zououming/darknet/data/horses.jpg");
+    image_cons_prod.armor_detector->loadImg(img);
+    image_cons_prod.armor_detector->find_robot();
+    image_cons_prod.armor_detector->track();
+
+    img = imread("/home/zououming/darknet/data/dog.jpg");
+    image_cons_prod.armor_detector->loadImg(img);
+    image_cons_prod.armor_detector->find_robot();
+    image_cons_prod.armor_detector->track();
+//        cv::waitKey(0);
 //    }
 }
 
@@ -34,6 +45,7 @@ int main(int argc, char * argv[]) {
         config_file_name = argv[1];
     Settings setting(config_file_name);
     OtherParam other_param;
+    std::mutex mutex;
     // communicate with car
     //int fd2car = openPort("/dev/ttyTHS2");
     //configurePort(fd2car);
@@ -43,21 +55,20 @@ int main(int argc, char * argv[]) {
     port.initSerialPort();
     CameraClass *cameraClass1=new CameraClass(&setting,port);
 #else
-    CameraClass *cameraClass1=new CameraClass(&setting);
+    CameraClass camera(&setting);
 #endif
 
-    ImageConsProd image_cons_prod(&setting, &other_param,cameraClass1);
+    ImageConsProd image_cons_prod(&setting, &other_param, &camera, &mutex);
     image_cons_prod.ImageConsProd_init();
     std::thread t1(&ImageConsProd::ImageProducer, image_cons_prod); // pass by reference
     std::thread t2(&ImageConsProd::ImageConsumer, image_cons_prod);
-
 #ifndef SHOW
     thread t0(&ImageConsProd::showImg,image_cons_prod);
     t0.join();
 #endif
     t1.join();
     t2.join();
-    cameraClass1->~CameraClass();
+    camera.~CameraClass();
     destroyAllWindows();
     return 0;
 }

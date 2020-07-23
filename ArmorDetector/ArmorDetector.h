@@ -281,7 +281,7 @@ namespace rm
         *	flag for the detection result
         *	// 标记检测结果
         */
-        yoloApi YOLOv3;
+        Ptr<yoloApi> YOLOv3;
 
         enum ArmorFlag
         {
@@ -338,7 +338,7 @@ namespace rm
         *	@Return: See enum ArmorFlag
         *	@Others: API for client
         */
-        int detect(const cv::Rect &robot);
+        RobotDescriptor detect(const cv::Rect &robot);
 
         std::string armsClassification(const cv::Mat &roiImg);
 
@@ -369,6 +369,7 @@ namespace rm
         *	@Return: 0 for small armor, 1 for big armor
         *	@Others: API for client
         */
+        Mat getLastImg();
         int getArmorType() const;
         void Pre_GetCenter();
         void Pre_GetViex();
@@ -414,11 +415,6 @@ namespace rm
         float center_x;
         float center_y;
 
-        int lower_blue_hsv[3] = {90, 90, 140}; //hsv
-        int upper_blue_hsv[3] = {120, 255, 255};
-        int lower_red_hsv[3] = {160, 80, 80};
-        int upper_red_hsv[3] = {180, 255, 255};
-        int red_H[2] = {0, 10};
         int kernel_size[2] = {3, 3};   //dilate_size erode_size
 
 
