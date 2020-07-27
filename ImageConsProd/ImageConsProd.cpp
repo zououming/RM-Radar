@@ -202,7 +202,7 @@ void ImageConsProd::ImageConsumer() {
 
         this->armor_detector->track();
         writer << armor_detector->getLastImg();
-        this->showImg();
+        this->showImg(1);
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
 //        {
 //            this->armor_detector->Kalman4f();
@@ -226,10 +226,11 @@ void ImageConsProd::ImageConsumer() {
     }
 }
 
-void ImageConsProd::showImg() {
+void ImageConsProd::showImg(int waitTime) {
     Mat img = armor_detector->getLastImg();
     imshow("last img", img);
-    waitKey(1);
+    if (waitTime >= 0)
+        waitKey(waitTime);
 }
 
 #ifndef SHOW

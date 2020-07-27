@@ -18,7 +18,7 @@ public:
     }
     void ImageProducer();
     void ImageConsumer();
-    void showImg();
+    void showImg(int waitTime);
     void ImageConsProd_init();
 
 public:

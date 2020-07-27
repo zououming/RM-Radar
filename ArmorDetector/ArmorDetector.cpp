@@ -376,7 +376,7 @@ namespace rm
                 }
             }
 #endif
-            cvtColor(_roiImg, _grayImg, COLOR_BGR2GRAY, 1);
+            cvtColor(robotImg, _grayImg, COLOR_BGR2GRAY, 1);
             cv::threshold(_grayImg, binBrightImg, _param.brightness_threshold, 255, cv::THRESH_BINARY);
 
             element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));//tuoyuan

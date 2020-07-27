@@ -3,7 +3,7 @@
 #include "ImageConsProd/ImageConsProd.h"
 using namespace rm;
 
-//#define TEXT_PIC
+#define TEXT_PIC
 #ifdef TEXT_PIC
 using namespace std;
 
@@ -11,9 +11,9 @@ int main(int argc, char * argv[]) {
     char * config_file_name = "../Settings/param_config.xml";
     Settings setting(config_file_name);
     OtherParam other_param;
-
-    CameraClass *cameraClass1 = new CameraClass(&setting);
-    ImageConsProd image_cons_prod(&setting, &other_param, cameraClass1);
+    std::mutex mutex;
+    CameraClass camera(&setting);
+    ImageConsProd image_cons_prod(&setting, &other_param, &camera, &mutex);
     image_cons_prod.ImageConsProd_init();
 
     image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
@@ -24,17 +24,20 @@ int main(int argc, char * argv[]) {
     image_cons_prod.armor_detector->loadImg(img);
     image_cons_prod.armor_detector->find_robot();
     image_cons_prod.armor_detector->track();
+    image_cons_prod.showImg(0);
 
     img = imread("/home/zououming/darknet/data/horses.jpg");
     image_cons_prod.armor_detector->loadImg(img);
     image_cons_prod.armor_detector->find_robot();
     image_cons_prod.armor_detector->track();
+    image_cons_prod.showImg(0);
 
     img = imread("/home/zououming/darknet/data/dog.jpg");
     image_cons_prod.armor_detector->loadImg(img);
     image_cons_prod.armor_detector->find_robot();
     image_cons_prod.armor_detector->track();
-//        cv::waitKey(0);
+    image_cons_prod.showImg(0);
+
 //    }
 }
 
@@ -57,7 +60,6 @@ int main(int argc, char * argv[]) {
 #else
     CameraClass camera(&setting);
 #endif
-
     ImageConsProd image_cons_prod(&setting, &other_param, &camera, &mutex);
     image_cons_prod.ImageConsProd_init();
     std::thread t1(&ImageConsProd::ImageProducer, image_cons_prod); // pass by reference
