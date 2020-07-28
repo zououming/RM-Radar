@@ -26,7 +26,7 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
 		BinYan Hu
 **************************************************************/
 #pragma once
-#include "../ArmorDetector/yoloApi.h"
+#include "../YOLO/yoloApi.h"
 #include<opencv2/opencv.hpp>
 #include<opencv2/tracking.hpp>
 #include<array>
@@ -54,8 +54,9 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
  *			   或者您可以重写调试交互模式。
  * 			3. remeber to change the path of pictures if using GET_ARMOR_PIC // 注意修改图片路径
  **************************************************************/
-//#define DEBUG_PRETREATMENT
+#define DEBUG_PRETREATMENT
 //#define DEBUG_DETECTION
+//#define DEBUG_THRESHOLD
 #define SHOW_RESULT
 //#define GET_ARMOR_PIC
 //#define DEBUG_HSV
@@ -329,6 +330,8 @@ namespace rm
         *	@Others: API for client
         */
         void find_robot();
+
+        void box_fix(cv::Rect &rect);
 
         /*
         *	@Brief: core of detection algrithm, include all the main detection process

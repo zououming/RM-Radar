@@ -1,17 +1,17 @@
 #include "../ImageConsProd/ImageConsProd.h"
 
-#define USE_VIDEO
+//#define USE_VIDEO
 
 void ImageConsProd::ImageConsProd_init() {
 #ifndef USE_VIDEO
     GX_STATUS emStatus=cap->cameraInit();
     if(emStatus != GX_STATUS_SUCCESS){
-        cout<<"初始化错误";
+        std::cout<<"初始化错误";
         return ;
     }
     emStatus=cap->cameraMode();
     if(emStatus != GX_STATUS_SUCCESS){
-        cout<<"设置错误";
+        std::cout<<"设置错误";
         return ;
     }
 #endif
@@ -30,44 +30,11 @@ void ImageConsProd::ImageConsProd_init() {
 }
 void ImageConsProd::ImageProducer() {
     std::cout << "start image producer" << std::endl;
-#ifdef USE_VIDEO
-    settings->save_result=0;
-    std::string video_name="/home/zououming/Videos/1.mp4";
-    Mat m_pss, src;
-//    Rect rec(200, 100, 1920-200-200, 1080-100-50);
-//    std::cout <<rec.size()<<std::endl;
-    cap->m_p = &m_pss;
-    time_t lInit;
-    time_t lEnd;
-    uint32_t ui32FrameCount = 0;
-    uint32_t ui32AcqFrameRate = 0;
-    VideoCapture cap_video(video_name);
-    if(!cap_video.isOpened())
-        return;
-    while (true)
-    {
-        if(!ui32FrameCount)
-            time(&lInit);
-
-        cap_video >> src;
-        this->mutex->lock();
-        m_pss = src;
-        this->mutex->unlock();
-//        m_pss = src(rec);
-//        m_pss = src;
-        if(src.data == NULL) {
-            std::cout << "null" << std::endl;
-            break;
-        }
-    }
-#else
     GX_STATUS emStatus = GX_STATUS_SUCCESS;
-
 
     //Thread running flag setup
     cap->g_bAcquisitionFlag = true;
     PGX_FRAME_BUFFER pFrameBuffer = NULL;
-
 
     Mat m_pss;
     time_t lInit;
@@ -75,11 +42,9 @@ void ImageConsProd::ImageProducer() {
     uint32_t ui32FrameCount = 0;
     uint32_t ui32AcqFrameRate = 0;
     emStatus = GXDQBuf(cap->g_hDevice, &pFrameBuffer, this->settings->camera_Enum);
-    //sleep(1);
     m_pss.create(pFrameBuffer->nHeight,pFrameBuffer->nWidth,CV_8UC3);
     cap->m_p=&m_pss;
 
-    //imwrite("/home/bazinga/CLionProjects/RM_nbut2020/1.jpg",m_pss);
     while(cap->g_bAcquisitionFlag)
     {
         if(!ui32FrameCount)
@@ -104,7 +69,6 @@ void ImageConsProd::ImageProducer() {
         }
 
         cap->PixelFormatConvert(pFrameBuffer);
-
 
         memcpy(m_pss.data,cap->g_pRGBImageBuf,pFrameBuffer->nHeight * pFrameBuffer->nWidth *3);
 
@@ -153,13 +117,11 @@ void ImageConsProd::ImageProducer() {
         }
     }
     printf("<Acquisition thread Exit!>\n");
-#endif
 }
 
 
 void ImageConsProd::ImageConsumer() {
     sleep(1);
-    this->armor_detector->setEnemyColor(BLUE);
     //Mat src;
 
     /* Variables for angle solve module */
@@ -172,27 +134,51 @@ void ImageConsProd::ImageConsumer() {
     time_t lInit;
     time_t lEnd;
     uint32_t ui32FrameCount = 0;
+    uint32_t ui32LastFrameCount = 0;
     uint32_t ui32AcqFrameRate = 0;
     std::vector<cv::Point2f> armorVertex;
     time(&lInit);
 
+#ifdef USE_VIDEO
     Mat src;
     std::string video_name="/home/zououming/Videos/1.mp4";
     VideoCapture cap_video(video_name);
-    VideoWriter writer("VideoTest.avi", CV_FOURCC('M', 'J', 'P', 'G'), 25.0, Size(1280, 720));
+    VideoWriter writer("VideoTest.avi", CV_FOURCC('M', 'J', 'P', 'G'), 25.0, Size(1920, 1080));
 
     while (true)
     {
         cap_video >> src;
-
-//        this->mutex->lock();
-//        Mat src = cap->m_p->clone();
-//        std::cout << "deal" << std::endl;
-//        this->mutex->unlock();
-
         if (src.data == NULL){
             std::cout << "break" << std::endl;
             break;
+        }
+        resize(src, src, Size(1920/2, 1080/2));
+
+        this->armor_detector->loadImg(src);
+        if(ui32FrameCount % this->settings->track_frame == 0)
+            this->armor_detector->find_robot();
+        this->armor_detector->track();
+
+        writer << armor_detector->getLastImg();
+        this->showImg(1);
+        ui32FrameCount++;
+        time (&lEnd);
+        if (lEnd - lInit >= 1)
+        {
+            std::cout<<"每秒"<<ui32FrameCount - ui32LastFrameCount << "帧" << std::endl;
+            ui32LastFrameCount = ui32FrameCount;
+            time (&lInit);
+        }
+    }
+#else
+    while (true)
+    {
+        Mat src = cap->m_p->clone();
+        resize(src, src, Size(1920/2, 1080/2));
+
+        if (src.data == NULL){
+            std::cout << "break" << std::endl;
+            continue;
         }
         if(!ui32FrameCount)
             time(&lInit);
@@ -201,7 +187,7 @@ void ImageConsProd::ImageConsumer() {
             this->armor_detector->find_robot();
 
         this->armor_detector->track();
-        writer << armor_detector->getLastImg();
+//        writer << armor_detector->getLastImg();
         this->showImg(1);
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
 //        {
@@ -213,17 +199,12 @@ void ImageConsProd::ImageConsumer() {
         time (&lEnd);
         if (lEnd - lInit >= 1)
         {
-//            std::cout<<"每秒"<<ui32FrameCount<<std::endl;
-//            ui32FrameCount = 0;
+            std::cout<<"每秒"<<ui32FrameCount - ui32LastFrameCount << "帧" << std::endl;
+            ui32LastFrameCount = ui32FrameCount;
+            time (&lInit);
         }
-
-#ifndef SHOW
-        //        if (i){
-            imshow("11",src);
-            waitKey(1);
-//        }
-#endif
     }
+#endif
 }
 
 void ImageConsProd::showImg(int waitTime) {

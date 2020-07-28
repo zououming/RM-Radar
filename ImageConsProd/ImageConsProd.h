@@ -4,17 +4,16 @@
 
 #include"../CameraClass/CameraClass.h"
 #include <mutex>
-//#define USE_VIDEO
+#define USE_VIDEO
 
 class ImageConsProd {
 public:
     ImageConsProd();
-    ImageConsProd(Settings * _settings, OtherParam *_otherParam, CameraClass *cap1, std::mutex *_mutex)
+    ImageConsProd(Settings * _settings, OtherParam *_otherParam, CameraClass *cap1)
     {
         settings = _settings;
         cap = cap1;
         otherParam = _otherParam;
-        mutex = _mutex;
     }
     void ImageProducer();
     void ImageConsumer();
@@ -22,7 +21,6 @@ public:
     void ImageConsProd_init();
 
 public:
-    std::mutex *mutex;
     OtherParam *otherParam;
     Settings *settings;
     CameraClass *cap;

@@ -2,11 +2,11 @@
 using namespace cv;
 
 yoloApi::yoloApi(){
-    cfg_file = "/home/zououming/darknet/cfg/yolov3.cfg";
-    weight_file = "/home/zououming/darknet/yolov3.weights";
-    class_file = "/home/zououming/darknet/data/coco.names";
-    class_num = 80;
-    thresh = 0.75;
+    cfg_file = "/home/zououming/RM-radar/YOLO/my_yolov3.cfg";
+    weight_file = "/home/zououming/RM-radar/YOLO/my_yolov3_900.weights";
+    class_file = "/home/zououming/RM-radar/YOLO/myData.names";
+    class_num = 1;
+    thresh = 0.3;
     nms = 0.35;
 
     std::ifstream class_names_file(class_file);

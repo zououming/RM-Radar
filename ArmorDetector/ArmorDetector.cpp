@@ -289,21 +289,21 @@ namespace rm
         _debugImg = srcImg.clone();
 #endif // DEBUG_DETECTION || SHOW_RESULT
 
-        Rect imgBound = Rect(cv::Point(0, 0), _srcImg.size());	// 矩形框
-
-        if (_flag == ARMOR_LOCAL && _trackCnt != _param.max_track_num)
-        {
-            cv::Rect bRect = boundingRect(_targetArmor.vertex) + _roi.tl();
-            bRect = cvex::scaleRect(bRect, Vec2f(3, 2));	//以中心为锚点放大2倍
-            _roi = bRect & imgBound;
-            _roiImg = _srcImg(_roi).clone();
-        }
-        else
-        {
-            _roi = imgBound;
-            _roiImg = _srcImg.clone();
-            _trackCnt = 0;
-        }
+//        Rect imgBound = Rect(cv::Point(0, 0), _srcImg.size());	// 矩形框
+//
+//        if (_flag == ARMOR_LOCAL && _trackCnt != _param.max_track_num)
+//        {
+//            cv::Rect bRect = boundingRect(_targetArmor.vertex) + _roi.tl();
+//            bRect = cvex::scaleRect(bRect, Vec2f(3, 2));	//以中心为锚点放大2倍
+//            _roi = bRect & imgBound;
+//            _roiImg = _srcImg(_roi).clone();
+//        }
+//        else
+//        {
+//            _roi = imgBound;
+//            _roiImg = _srcImg.clone();
+//            _trackCnt = 0;
+//        }
 
 #ifdef DEBUG_DETECTION
         _roiImg = _srcImg.clone();
@@ -320,11 +320,21 @@ namespace rm
         YOLO_box = YOLOv3->get_boxes(_srcImg);
         cout<<"find:"<<YOLO_box.size()<<endl;
         for (auto &robot_rect : YOLO_box) {
+            box_fix(robot_rect);
             RobotDescriptor robot = detect(robot_rect);
             robot_box.emplace_back(robot);
             trackers->add(cv::TrackerKCF::create(), _srcImg, robot.position);
         }
     }
+
+    void ArmorDetector::box_fix(cv::Rect &rect)
+    {
+        if (rect.x + rect.width > _srcImg.size[1] - 1)
+            rect.x = _srcImg.size[1] - 1 - rect.width;
+        if (rect.y + rect.height > _srcImg.size[0] - 1)
+            rect.y = _srcImg.size[0] - 1 - rect.height;
+    }
+
 
     RobotDescriptor ArmorDetector::detect(const cv::Rect &robot_rect)
     {
@@ -336,8 +346,8 @@ namespace rm
             cv::Mat binBrightImg, robotImg;//二值化
             cv::Mat element, erode_element, dilate_element;
             int threshold = _param.brightness_threshold;
-            robotImg = _srcImg(robot_rect);
-            cvtColor(robotImg, _grayImg, COLOR_BGR2GRAY, 1);
+            _roiImg = _srcImg(robot_rect);
+            cvtColor(_roiImg, _grayImg, COLOR_BGR2GRAY, 1);
 
 #ifdef DEBUG_THRESHOLD
             {
@@ -375,15 +385,13 @@ namespace rm
                     }
                 }
             }
-#endif
-            cvtColor(robotImg, _grayImg, COLOR_BGR2GRAY, 1);
+#endif // DEBUG_THRESHOLD
             cv::threshold(_grayImg, binBrightImg, _param.brightness_threshold, 255, cv::THRESH_BINARY);
-
             element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));//tuoyuan
             dilate(binBrightImg, binBrightImg, element);
 #ifdef DEBUG_PRETREATMENT
             imshow("brightness_binary", binBrightImg);
-            waitKey();
+            waitKey(1);
 #endif // DEBUG_PRETREATMENT
 
             /*
@@ -393,8 +401,7 @@ namespace rm
             cv::findContours(binBrightImg.clone(), lightContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
             for (const auto &contour : lightContours) {
                 float lightContourArea = contourArea(contour);        // 面积判断
-                if (contour.size() <= 5 ||
-                    lightContourArea < _param.light_min_area)
+                if (contour.size() <= 5 || lightContourArea < _param.light_min_area)
                     continue;
 
                 RotatedRect lightRec = fitEllipse(contour);
@@ -411,7 +418,6 @@ namespace rm
                 lightRec.size.width *= _param.light_color_detect_extend_ratio;
                 lightRec.size.height *= _param.light_color_detect_extend_ratio;
                 Rect lightRect = lightRec.boundingRect();
-
 
                 const Rect srcBound(Point(0, 0), _roiImg.size());
                 lightRect &= srcBound;
@@ -435,17 +441,17 @@ namespace rm
                 Mat debugColorImg = _srcImg.clone();
                 const String BGR = "(" + std::to_string(int(meanVal[0])) + ", " + std::to_string(int(meanVal[1])) + ", " + std::to_string(int(meanVal[2])) + ")";
 
-                    if (meanVal[BLUE] - meanVal[RED] > 20.0) //|| (_enemy_color == RED && meanVal[RED] - meanVal[BLUE] > 20.0))
-                    {
-                        this_robot.team = rm::BLUE;
-                        lightInfos.emplace_back(LightDescriptor(lightRec));
-                        //putText(debugColorImg, BGR, Point(lightVertexArray[0]) + _roi.tl(), FONT_HERSHEY_SIMPLEX, 0.4, cvex::GREEN, 1); //fontScalar 0.34
-                    }
-                    else if (meanVal[RED] - meanVal[BLUE] > 20.0)
-                    {
-                        this_robot.team = rm::RED;
-                        lightInfos.emplace_back(LightDescriptor(lightRec));
-                    }
+                if (meanVal[BLUE] - meanVal[RED] > 20.0) //|| (_enemy_color == RED && meanVal[RED] - meanVal[BLUE] > 20.0))
+                {
+                    this_robot.team = rm::BLUE;
+                    lightInfos.emplace_back(LightDescriptor(lightRec));
+                    //putText(debugColorImg, BGR, Point(lightVertexArray[0]) + _roi.tl(), FONT_HERSHEY_SIMPLEX, 0.4, cvex::GREEN, 1); //fontScalar 0.34
+                }
+                else if (meanVal[RED] - meanVal[BLUE] > 20.0)
+                {
+                    this_robot.team = rm::RED;
+                    lightInfos.emplace_back(LightDescriptor(lightRec));
+                }
                 //else
                 //{
                 //	putText(debugColorImg, BGR, Point(lightVertexArray[0]) + _roi.tl(), FONT_HERSHEY_SIMPLEX, 0.4, cvex::CYAN, 1); //fontScalar 0.34
@@ -453,7 +459,6 @@ namespace rm
                 //imshow("BGR", debugColorImg);
                 //waitKey(0);
             }
-
 #ifdef DEBUG_DETECTION
             vector<RotatedRect> lightsRecs;
             for (auto& light : lightInfos)
@@ -462,7 +467,6 @@ namespace rm
             }
 //			cvex::showRectangles(_debugWindowName, _debugImg, _debugImg, lightsRecs, cvex::MAGENTA, 1, _roi.tl());
 #endif //DEBUG_DETECTION
-
         }
 
         /*
@@ -538,7 +542,6 @@ namespace rm
                     break;
                 }
             }
-
 #ifdef  DEBUG_DETECTION
             vector<vector<Point>> armorVertexs;
             for (const auto& armor : _armors)
@@ -581,7 +584,9 @@ namespace rm
             _targetArmor = _armors[0];
             Pre_GetCenter();
             Rect armorRect = cv::boundingRect(_targetArmor.vertex);
+            cout<<"223"<<endl;
             armorImg = _grayImg(armorRect);
+            cout<<"222"<<endl;
             this_robot.arms = armsClassification(armorImg);
         }
 

@@ -32,8 +32,8 @@ add_executable(RM_radar main.cpp
         ImageConsProd/ImageConsProd.h
         ImageConsProd/ImageConsProd.cpp
 
-        ArmorDetector/yoloApi.h
-        ArmorDetector/yoloApi.cpp
+        YOLO/yoloApi.h
+        YOLO/yoloApi.cpp
         )
 
 target_link_libraries (RM_radar
