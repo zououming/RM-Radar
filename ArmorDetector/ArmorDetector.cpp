@@ -326,12 +326,7 @@ namespace rm
         cout<<"find:"<<YOLO_box.size()<<endl;
         if (!YOLO_box.size())
             return;
-//        brightness_adjust(_srcImg, 0.8, 0);
         cvtColor(_srcImg, _grayImg, COLOR_BGR2GRAY, 1);
-
-//        Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
-//        erode(_binImg, _binImg, element);
-//        dilate(_binImg, _binImg, element);
 
         for (int i = 0; i < YOLO_box.size(); i++) {
             box_fix(YOLO_box[i]);
@@ -401,21 +396,12 @@ namespace rm
 
                     alpha = double(getTrackbarPos("alpha * 10", adjust_window)) / 10;
                     beta = getTrackbarPos("beta", adjust_window);
-                    brightness_adjust(this_robot_src, 0.8, 0);
+                    brightness_adjust(this_robot_src, alpha, beta);
 
                     _param.brightness_threshold = getTrackbarPos("threshold", adjust_window);
                     kernel_size[0] = getTrackbarPos("dilate size", adjust_window);
                     kernel_size[1] = getTrackbarPos("erode size", adjust_window);
 
-                    cout << "alpha: " << alpha << endl;
-                    cout << "beta: " << beta << endl;
-
-                    for( int y = 0; y < this_robot_src.rows; y++ )
-                        for( int x = 0; x < this_robot_src.cols; x++ )
-                            for( int c = 0; c < 3; c++ ) {
-                                this_robot_src.at<Vec3b>(y, x)[c] *= alpha;
-                                this_robot_src.at<Vec3b>(y, x)[c] += beta;
-                            }
                     cv::imshow("src", this_robot_src);
                     cvtColor(this_robot_src, this_robot_gray, COLOR_BGR2GRAY, 1);
                     cv::threshold(this_robot_gray, this_robot_bin, _param.brightness_threshold, 255, cv::THRESH_BINARY);
@@ -698,6 +684,7 @@ namespace rm
             Point text_point(int(robot_box[i].position.x), int(robot_box[i].position.y - 2));
             putText(_roiImg, text, text_point, FONT_HERSHEY_SIMPLEX, 0.8, line_color, 2);
         }
+        deal = true;
 
     }
 

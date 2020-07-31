@@ -4,7 +4,7 @@
 
 #include"../CameraClass/CameraClass.h"
 #include <mutex>
-#define USE_VIDEO
+//#define USE_VIDEO
 
 class ImageConsProd {
 public:

@@ -3,7 +3,7 @@ using namespace cv;
 
 yoloApi::yoloApi(){
     cfg_file = "/home/zououming/RM-radar/YOLO/weightFile/my_yolov3.cfg";
-    weight_file = "/home/zououming/RM-radar/YOLO/weightFile/my_yolov3_26000.weights";
+    weight_file = "/home/zououming/RM-radar/YOLO/weights3/my_yolov3_5000.weights";
     class_file = "/home/zououming/RM-radar/YOLO/weightFile/myData.names";
     class_num = 2;
     thresh = 0.9;

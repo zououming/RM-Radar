@@ -59,7 +59,6 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
 //#define DEBUG_THRESHOLD
 //#define SHOW_RESULT
 //#define GET_ARMOR_PIC
-//#define DEBUG_HSV
 
 namespace rm
 {
@@ -286,6 +285,7 @@ namespace rm
         *	// 标记检测结果
         */
         Ptr<yoloApi> YOLOv3;
+        bool deal;
 
         enum ArmorFlag
         {
@@ -396,7 +396,6 @@ namespace rm
         cv::Mat _srcImg; //source img		// 原图像
         cv::Mat _roiImg; //roi from the result of last frame // 最后一帧图像的ROI
         cv::Mat _grayImg; //gray img of roi	// ROI的灰度图
-        cv::Mat _binImg;
 
         int _trackCnt = 0;						// 跟踪数：0 ？
 

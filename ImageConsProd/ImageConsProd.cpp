@@ -141,7 +141,7 @@ void ImageConsProd::ImageConsumer() {
 
 #ifdef USE_VIDEO
     Mat src;
-    std::string video_name="/home/zououming/Videos/1.mp4";
+    std::string video_name="/home/zououming/Videos/3.mp4";
     VideoCapture cap_video(video_name);
     VideoWriter writer("/home/zououming/RM-radar/cmake-build-debug/VideoTest.avi", CV_FOURCC('M', 'J', 'P', 'G'), 25.0, Size(1920/2, 1080/2));
 
@@ -159,9 +159,9 @@ void ImageConsProd::ImageConsumer() {
             this->armor_detector->find_robot();
         this->armor_detector->track();
 
-//        writer << armor_detector->getLastImg();
-//        waitKey(1);
-//        this->showImg(1);
+        writer << armor_detector->getLastImg();
+        waitKey(1);
+        this->showImg(1);
         ui32FrameCount++;
         time (&lEnd);
         if (lEnd - lInit >= 1)
@@ -190,7 +190,7 @@ void ImageConsProd::ImageConsumer() {
 
         this->armor_detector->track();
 //        writer << armor_detector->getLastImg();
-        this->showImg(1);
+//        this->showImg(1);
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
 //        {
 //            this->armor_detector->Kalman4f();
@@ -210,12 +210,32 @@ void ImageConsProd::ImageConsumer() {
 }
 
 void ImageConsProd::showImg(int waitTime) {
-    while(1) {
+    if(waitTime < 0) {
+        time_t lInit, lEnd;
+        time(&lInit);
+        uint32_t ui32FrameCount = 0;
+        while (1) {
+            if (armor_detector->deal) {
+                time(&lEnd);
+                Mat img = armor_detector->getLastImg();
+                if (img.data != NULL)
+                    imshow("last img", img);
+                waitKey(1);
+                armor_detector->deal = false;
+                ui32FrameCount++;
+            }
+            if(lEnd - lInit >= 1){
+                std::cout << "显示:" << ui32FrameCount << std::endl;
+                ui32FrameCount = 0;
+                time(&lInit);
+            }
+        }
+    }
+    else {
         Mat img = armor_detector->getLastImg();
-        if(img.data != NULL)
+        if (img.data != NULL)
             imshow("last img", img);
-        if (waitTime >= 0)
-            waitKey(waitTime);
+        waitKey(waitTime);
     }
 }
 
