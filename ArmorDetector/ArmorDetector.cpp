@@ -30,8 +30,9 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
 #include<vector>
 #include<math.h>
 #include<string>
-#include <unistd.h>
-#include"opencv_extended.h"
+#include<unistd.h>
+#include "cuda.h"
+#include "opencv_extended.h"
 //#include"../General/numeric_rm.h"
 
 using namespace std;
@@ -115,6 +116,7 @@ namespace rm
      * ****************************/
     ArmorDescriptor::ArmorDescriptor(const LightDescriptor& lLight, const LightDescriptor& rLight, const int armorType, const cv::Mat& grayImg, float rotaScore, ArmorParam _param, Mat srcImg)//装甲描述符
     {
+        color = lLight.color;
         //handle two lights
         lightPairs[0] = lLight.rec();	// 保存两个旋转矩形
         lightPairs[1] = rLight.rec();
@@ -140,8 +142,8 @@ namespace rm
         vertex[2] = lower_r;
         vertex[3] = lower_l;
 
-        for ( int i = 0; i < 4; i++ )
-        cv::line(srcImg, vertex[i], vertex[(i+1)%4], cvex::GREEN, 1, 8, 0);
+//        for ( int i = 0; i < 4; i++ )
+//        cv::line(srcImg, vertex[i], vertex[(i+1)%4], cvex::GREEN, 1, 8, 0);
 
         //set armor type
         type = armorType;
@@ -188,8 +190,8 @@ namespace rm
         cv::warpPerspective(grayImg, frontImg, perspMat, Size(width, height));
 //        int name_cont = rand();
 //        cv::imwrite("/home/zououming/Pictures/train/"+to_string(name_cont)+".png", frontImg);
-//        cv::imshow("frontImg", frontImg);
-        cv::waitKey(1);
+        cv::imshow("frontImg", frontImg);
+//        cv::waitKey(0);
         return frontImg;
     }
 
@@ -198,7 +200,7 @@ namespace rm
         center_y =(_targetArmor.vertex[3].y-_targetArmor.vertex[0].y)/2+_targetArmor.vertex[0].y +_roi.tl().y;
 
         cv::Point2d ss(center_x,center_y);
-        circle(_debugImg, ss, 3, Scalar(255, 255, 255), -1);
+//        circle(_debugImg, ss, 3, Scalar(255, 255, 255), -1);
 
         Mat prediction = KF->predict();
         Point predict_pt = Point((int)prediction.at<float>(0), (int)prediction.at<float>(1));
@@ -207,7 +209,7 @@ namespace rm
         measurement->at<float>(1) = (float)center_y;
         KF->correct(*measurement);
 
-        circle(_debugImg, predict_pt, 3, Scalar(34, 255, 255), -1);
+//        circle(_debugImg, predict_pt, 3, Scalar(34, 255, 255), -1);
 
 //           circle(_debugImg,cv::Point2f(-(2*(center_x-_roi.tl().x-_targetArmor.vertex[0].x)-_targetArmor.vertex[1].x),
 //                                        -(2*(center_y-_roi.tl().y-_targetArmor.vertex[0].y)-_targetArmor.vertex[3].y)), 3, Scalar(0, 0, 255), -1);
@@ -234,7 +236,7 @@ namespace rm
                                        -(2*(center_y-_roi.tl().y-_targetArmor.vertex[0].y)-_targetArmor.vertex[3].y)+_targetArmor.vertex[3].y-_targetArmor.vertex[0].y));
 
 
-        cvex::showContour(_debugWindowName, _debugImg, _debugImg, intVertex, cvex::GREEN, -1, _roi.tl());
+//        cvex::showContour(_debugWindowName, _debugImg, _debugImg, intVertex, cvex::GREEN, -1, _roi.tl());
     }
     ArmorDetector::ArmorDetector()
     {
@@ -314,18 +316,40 @@ namespace rm
     void ArmorDetector::find_robot()
     {
         YOLO_box.clear();
+        YOLO_class.clear();
         robot_box.clear();
         trackers = MultiTracker::create();
 
         YOLO_box = YOLOv3->get_boxes(_srcImg);
+        YOLO_class = YOLOv3->get_class();
+
         cout<<"find:"<<YOLO_box.size()<<endl;
-        for (auto &robot_rect : YOLO_box) {
-            box_fix(robot_rect);
-            RobotDescriptor robot = detect(robot_rect);
+        if (!YOLO_box.size())
+            return;
+//        brightness_adjust(_srcImg, 0.8, 0);
+        cvtColor(_srcImg, _grayImg, COLOR_BGR2GRAY, 1);
+
+//        Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+//        erode(_binImg, _binImg, element);
+//        dilate(_binImg, _binImg, element);
+
+        for (int i = 0; i < YOLO_box.size(); i++) {
+            box_fix(YOLO_box[i]);
+            RobotDescriptor robot = detect(YOLO_box[i]);
+            robot.team = YOLO_class[i] == "blue robot"? rm::RED: rm::BLUE;
             robot_box.emplace_back(robot);
             trackers->add(cv::TrackerKCF::create(), _srcImg, robot.position);
         }
     }
+
+    void ArmorDetector::brightness_adjust(cv::Mat &img, float alpha, int beta)
+    {
+        for( int y = 0; y < img.rows; y++ )
+            for( int x = 0; x < img.cols; x++ )
+                for( int c = 0; c < 3; c++ )
+                    img.at<Vec3b>(y, x)[c] = alpha * img.at<Vec3b>(y, x)[c] + beta;
+    }
+
 
     void ArmorDetector::box_fix(cv::Rect &rect)
     {
@@ -338,45 +362,74 @@ namespace rm
 
     RobotDescriptor ArmorDetector::detect(const cv::Rect &robot_rect)
     {
-        RobotDescriptor this_robot{rm::GREEN, "?", robot_rect};
-        cv::Mat armorImg;
+        RobotDescriptor this_robot{rm::GREEN, "robot", robot_rect};
+        cv::Mat armorImg, element;
+        cv::Mat this_robot_src, this_robot_gray, this_robot_bin;
 
         std::vector<rm::LightDescriptor> lightInfos;
         {
-            cv::Mat binBrightImg, robotImg;//二值化
-            cv::Mat element, erode_element, dilate_element;
-            int threshold = _param.brightness_threshold;
-            _roiImg = _srcImg(robot_rect);
-            cvtColor(_roiImg, _grayImg, COLOR_BGR2GRAY, 1);
+            float rate = float(robot_rect.height) / 450;
+            Size enlarge_size(int(robot_rect.width/rate), int(robot_rect.height/rate));
+            this_robot_src = _srcImg(robot_rect);
+            this_robot_gray = _grayImg(robot_rect);
 
+            resize(this_robot_src, this_robot_src, enlarge_size);
+            resize(this_robot_gray, this_robot_gray, enlarge_size);
+
+            cv::threshold(this_robot_gray, this_robot_bin, _param.brightness_threshold, 255, cv::THRESH_BINARY);
+            element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));//tuoyuan
+            dilate(this_robot_bin, this_robot_bin, element);
 #ifdef DEBUG_THRESHOLD
             {
+                double alpha = 0.8;
+                int beta = 10;
+                Mat erode_element, dilate_element;
+
                 string adjust_window = "adjust threshold";
                 namedWindow(adjust_window);
 
-                createTrackbar("threshold", adjust_window, &threshold, 255);
+                createTrackbar("alpha * 10", adjust_window, 0, 30);
+                createTrackbar("beta", adjust_window, &beta, 100);
+                createTrackbar("threshold", adjust_window, &_param.brightness_threshold, 255);
 
                 createTrackbar("dilate size", adjust_window, &kernel_size[0], 20);
                 createTrackbar("erode size", adjust_window, &kernel_size[1], 20);
 
                 while (1) {
-                    threshold = getTrackbarPos("threshold", adjust_window);
+                    this_robot_src = _srcImg(robot_rect);
+                    resize(this_robot_src, this_robot_src, enlarge_size);
+
+                    alpha = double(getTrackbarPos("alpha * 10", adjust_window)) / 10;
+                    beta = getTrackbarPos("beta", adjust_window);
+                    brightness_adjust(this_robot_src, 0.8, 0);
+
+                    _param.brightness_threshold = getTrackbarPos("threshold", adjust_window);
                     kernel_size[0] = getTrackbarPos("dilate size", adjust_window);
                     kernel_size[1] = getTrackbarPos("erode size", adjust_window);
 
-                    cvtColor(_roiImg, _grayImg, COLOR_BGR2GRAY, 1);
-                    cv::threshold(_grayImg, binBrightImg, threshold, 255, cv::THRESH_BINARY);
+                    cout << "alpha: " << alpha << endl;
+                    cout << "beta: " << beta << endl;
+
+                    for( int y = 0; y < this_robot_src.rows; y++ )
+                        for( int x = 0; x < this_robot_src.cols; x++ )
+                            for( int c = 0; c < 3; c++ ) {
+                                this_robot_src.at<Vec3b>(y, x)[c] *= alpha;
+                                this_robot_src.at<Vec3b>(y, x)[c] += beta;
+                            }
+                    cv::imshow("src", this_robot_src);
+                    cvtColor(this_robot_src, this_robot_gray, COLOR_BGR2GRAY, 1);
+                    cv::threshold(this_robot_gray, this_robot_bin, _param.brightness_threshold, 255, cv::THRESH_BINARY);
 
                     if (kernel_size[1] >= 3) {
                         erode_element = getStructuringElement(MORPH_ELLIPSE, Size(kernel_size[1], kernel_size[1]));
-                        erode(binBrightImg, binBrightImg, erode_element);
+                        erode(this_robot_bin, this_robot_bin, erode_element);
                     }
                     if (kernel_size[0] >= 3) {
                         dilate_element = getStructuringElement(MORPH_ELLIPSE, Size(kernel_size[0], kernel_size[0]));
-                        dilate(binBrightImg, binBrightImg, dilate_element);
+                        dilate(this_robot_bin, this_robot_bin, dilate_element);
                     }
 
-                    imshow("binBrightImg", binBrightImg);
+                    imshow("binBrightImg", this_robot_bin);
 
                     int Key = waitKey(1);
                     if (Key == 27) {
@@ -385,20 +438,15 @@ namespace rm
                     }
                 }
             }
+            cout << _param.brightness_threshold << endl;
 #endif // DEBUG_THRESHOLD
-            cv::threshold(_grayImg, binBrightImg, _param.brightness_threshold, 255, cv::THRESH_BINARY);
-            element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));//tuoyuan
-            dilate(binBrightImg, binBrightImg, element);
+
 #ifdef DEBUG_PRETREATMENT
-            imshow("brightness_binary", binBrightImg);
+            imshow("brightness_binary", this_robot_bin);
             waitKey(1);
 #endif // DEBUG_PRETREATMENT
-
-            /*
-            *	find and filter light bars
-            */
             vector<vector<Point>> lightContours;                    // 寻找轮廓
-            cv::findContours(binBrightImg.clone(), lightContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
+            cv::findContours(this_robot_bin.clone(), lightContours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
             for (const auto &contour : lightContours) {
                 float lightContourArea = contourArea(contour);        // 面积判断
                 if (contour.size() <= 5 || lightContourArea < _param.light_min_area)
@@ -407,50 +455,47 @@ namespace rm
                 RotatedRect lightRec = fitEllipse(contour);
                 adjustRec(lightRec, ANGLE_TO_UP);
 
-                //float solidity = lightContourArea / lightRec.size.area();
+//                vector<RotatedRect> lightsRecs;
+//                lightsRecs.emplace_back(lightRec);
+//                cvex::showRectangles("lights", this_robot_src, this_robot_src, lightsRecs, cvex::GREEN, 0);
+//                cout << lightContourArea <<endl;
                 if (lightRec.size.width / lightRec.size.height > _param.light_max_ratio ||
                     lightContourArea / lightRec.size.area() < _param.light_contour_min_solidity)
                     continue;    // 长宽比判断
-
-                //Mat temp;
-                //cvex::showRectangle("light_right_position", _srcImg, temp, lightRec, cvex::GREEN,0, _roi.tl());
 
                 lightRec.size.width *= _param.light_color_detect_extend_ratio;
                 lightRec.size.height *= _param.light_color_detect_extend_ratio;
                 Rect lightRect = lightRec.boundingRect();
 
-                const Rect srcBound(Point(0, 0), _roiImg.size());
+                const Rect srcBound(Point(0, 0), this_robot_src.size());
                 lightRect &= srcBound;
-                Mat lightImg = _roiImg(lightRect);
+                Mat lightImg = this_robot_src(lightRect);
                 Mat lightMask = Mat::zeros(lightRect.size(), CV_8UC1);
-                Point2f lightVertexArray[4];//tuoyuan 4个顶点
+                Point2f lightVertexArray[4];
                 lightRec.points(lightVertexArray);
                 std::vector<Point> lightVertex;
-                for (int i = 0; i < 4; i++) {
+                for (int i = 0; i < 4; i++)
                     lightVertex.emplace_back(Point(lightVertexArray[i].x - lightRect.tl().x,
                                                    lightVertexArray[i].y - lightRect.tl().y));
-                }
                 fillConvexPoly(lightMask, lightVertex, 255);
 
-//                lightInfos.push_back(LightDescriptor(lightRec));
+                if (lightImg.size().area() <= 0 || lightMask.size().area() <= 0) continue;
+                Mat element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+                cv::dilate(lightMask, lightMask, element);
+                const Scalar meanVal = mean(lightImg, lightMask);
 
-                    if (lightImg.size().area() <= 0 || lightMask.size().area() <= 0) continue;
-                    cv::dilate(lightMask, lightMask, element);
-                    const Scalar meanVal = mean(lightImg, lightMask);
+                Mat debugColorImg = this_robot_src.clone();
+//                const String BGR = "(" + std::to_string(int(meanVal[0])) + ", " + std::to_string(int(meanVal[1])) + ", " + std::to_string(int(meanVal[2])) + ")";
+//                cout<<BGR<<endl;
 
-                Mat debugColorImg = _srcImg.clone();
-                const String BGR = "(" + std::to_string(int(meanVal[0])) + ", " + std::to_string(int(meanVal[1])) + ", " + std::to_string(int(meanVal[2])) + ")";
-
-                if (meanVal[BLUE] - meanVal[RED] > 20.0) //|| (_enemy_color == RED && meanVal[RED] - meanVal[BLUE] > 20.0))
+                if (meanVal[BLUE] - meanVal[RED] > 50.0) //|| (_enemy_color == RED && meanVal[RED] - meanVal[BLUE] > 20.0))
                 {
-                    this_robot.team = rm::BLUE;
-                    lightInfos.emplace_back(LightDescriptor(lightRec));
+                    lightInfos.emplace_back(LightDescriptor(lightRec, rm::BLUE));
                     //putText(debugColorImg, BGR, Point(lightVertexArray[0]) + _roi.tl(), FONT_HERSHEY_SIMPLEX, 0.4, cvex::GREEN, 1); //fontScalar 0.34
                 }
-                else if (meanVal[RED] - meanVal[BLUE] > 20.0)
+                else if (meanVal[RED] - meanVal[BLUE] > 50.0)
                 {
-                    this_robot.team = rm::RED;
-                    lightInfos.emplace_back(LightDescriptor(lightRec));
+                    lightInfos.emplace_back(LightDescriptor(lightRec, rm::RED));
                 }
                 //else
                 //{
@@ -462,10 +507,8 @@ namespace rm
 #ifdef DEBUG_DETECTION
             vector<RotatedRect> lightsRecs;
             for (auto& light : lightInfos)
-            {
                 lightsRecs.emplace_back(light.rec());
-            }
-//			cvex::showRectangles(_debugWindowName, _debugImg, _debugImg, lightsRecs, cvex::MAGENTA, 1, _roi.tl());
+			cvex::showRectangles("lights", this_robot_src, this_robot_src, lightsRecs, cvex::GREEN, 0);
 #endif //DEBUG_DETECTION
         }
 
@@ -481,11 +524,16 @@ namespace rm
                 for (size_t j = i + 1; (j < lightInfos.size()); j++) {
                     const LightDescriptor &leftLight = lightInfos[i];
                     const LightDescriptor &rightLight = lightInfos[j];
-
+//                    if (leftLight.color != rightLight.color) {
+//                        cout<<"color"<<endl;
+//                        continue;
+//                    }
 #ifdef DEBUG_DETECTION
-                    Mat pairImg = _srcImg.clone();
+                    Mat pairImg = this_robot_src .clone();
                     vector<RotatedRect> curLightPair{ leftLight.rec(), rightLight.rec() };
-                    cvex::showRectangles("debug pairing", pairImg, pairImg, curLightPair, cvex::CYAN, 0, _roi.tl());
+                    std::cout << "left color:" << leftLight.color << " " << "right color:" << rightLight.color << endl;
+                    std::cout << "right:" << rightLight.area << std::endl;
+                    cvex::showRectangles("debug pairing", pairImg, pairImg, curLightPair, cvex::RED, 0);
 #endif // DEBUG_DETECTION
 
                     /*
@@ -536,8 +584,8 @@ namespace rm
                     float yOff = yDiff / meanLen;
                     float rotationScore = -(ratiOff * ratiOff + yOff * yOff);
 
-                    ArmorDescriptor armor(leftLight, rightLight, armorType, _grayImg, rotationScore, _param,
-                                          _srcImg);
+                    ArmorDescriptor armor(leftLight, rightLight, armorType, this_robot_gray, rotationScore, _param,
+                                          this_robot_src);
                     _armors.emplace_back(armor);
                     break;
                 }
@@ -553,7 +601,7 @@ namespace rm
                 }
                 armorVertexs.emplace_back(intVertex);
             }
-            Mat result = _srcImg.clone();
+            Mat result = this_robot_src.clone();
             cvex::showContours("result", result, _debugImg, armorVertexs, cvex::GREEN, -1, _roi.tl());
 #endif //  DEBUG_DETECTION
         }
@@ -577,16 +625,22 @@ namespace rm
             return !(i.isArmorPattern());
         }), _armors.end());
 
-
-        if (_armors.empty())
-            this_robot.arms = "?";
+        if (_armors.empty()) {
+            if(lightInfos.size() > 0) {
+                sort(lightInfos.begin(), lightInfos.end(), [](const LightDescriptor &ld1, const LightDescriptor &ld2) {
+                    return ld1.area > ld2.area;
+                });
+                this_robot.team = lightInfos[0].color;
+                for (auto &lightInfo : lightInfos)
+                    if (lightInfo.area > 400 && lightInfo.area < 600)
+                        this_robot.team = lightInfo.color;
+            }
+        }
         else if (_armors.size() > 0) {
             _targetArmor = _armors[0];
             Pre_GetCenter();
-            Rect armorRect = cv::boundingRect(_targetArmor.vertex);
-            cout<<"223"<<endl;
-            armorImg = _grayImg(armorRect);
-            cout<<"222"<<endl;
+            armorImg = _targetArmor.frontImg;
+            this_robot.team = _targetArmor.color;
             this_robot.arms = armsClassification(armorImg);
         }
 
@@ -597,29 +651,32 @@ namespace rm
 //        cv::imshow(_debugWindowName, _debugImg);
 //        cv::waitKey(0);
 #endif //DEBUG_DETECTION || SHOW_RESULT
-
+        _armors.clear();
         return this_robot;
     }
 
     std::string ArmorDetector::armsClassification(const cv::Mat &roiImg)
     {
         Mat regulatedImg;
-//            if(type == BIG_ARMOR)
-//                regulatedImg = frontImg(Rect(21, 0, 50, 50));
-//            else
+
         regulatedImg = roiImg.clone();
-        threshold(regulatedImg, regulatedImg, 100, 255, THRESH_OTSU);
         resize(regulatedImg, regulatedImg, Size(25, 25));
+        threshold(regulatedImg, regulatedImg, 100, 255, THRESH_OTSU);
+        imshow("armor", regulatedImg);
         Mat data = regulatedImg.reshape(1, 1);
 
         data.convertTo(data, CV_32FC2);
 
-        int result = (int)svm->predict(data);
+        int result = svm->predict(data);
+
+        waitKey(1);
         return armsList[result];
     }
 
 
-    int ArmorDetector::track() {
+    void ArmorDetector::track() {
+        if (trackers->empty())
+            return;
         trackers->update(_srcImg);
         _roiImg = _srcImg.clone();
         vector<Rect_<double>> new_position = trackers->getObjects();
@@ -631,19 +688,17 @@ namespace rm
             line_color = robot_box[i].team == rm::RED ? cvex::RED : cvex::BLUE;
             team = robot_box[i].team == rm::RED ? "red" : "blue";
             if (robot_box[i].team == rm::GREEN) {
-                line_color = cvex::GREEN;
-                team = "green";
+                line_color = cvex::YELLOW;
+                team = "?";
             }
 
-            text = team + " " + robot_box[i].arms;
+            text = team == "?" ? "?" : team + " " + robot_box[i].arms;
             rectangle(_roiImg, robot_box[i].position, line_color, 2, 1);
 
             Point text_point(int(robot_box[i].position.x), int(robot_box[i].position.y - 2));
             putText(_roiImg, text, text_point, FONT_HERSHEY_SIMPLEX, 0.8, line_color, 2);
         }
 
-//        imshow("last_img", _roiImg);
-//        waitKey(1);
     }
 
     Mat ArmorDetector::getLastImg() {
@@ -680,36 +735,26 @@ namespace rm
 
     bool ArmorDescriptor::isArmorPattern() const
     {
-//            // cut the central part of the armor
-//            Mat regulatedImg;
-//            if(type == BIG_ARMOR)
-//            {
-//                regulatedImg = frontImg(Rect(21, 0, 50, 50));
-//            }
-//            else
-//            {
-//                regulatedImg = frontImg;
-//            }
-//
-//            resize(regulatedImg,regulatedImg, Size(regulatedImg.size().width / 2, regulatedImg.size().height / 2));
-//            // copy the data to make the matrix continuous
-//            Mat temp;
-//            regulatedImg.copyTo(temp);
-//            Mat data = temp.reshape(1, 1);
-//
-//            data.convertTo(data, CV_32FC1);
-//
-//            Ptr<SVM> svm = StatModel::load<SVM>("/home/bazinga/CLionProjects/RM_nbut2020/ArmorDetector/SVM3.xml");
-//
-//
-//            int result = (int)svm->predict(data);
-//            if(result == 1) return true;
-//            else return false;
+            Mat regulatedImg;
+            if(type == BIG_ARMOR)
+                regulatedImg = frontImg(Rect(21, 0, 50, 50));
+            else
+                regulatedImg = frontImg;
 
+            resize(regulatedImg,regulatedImg, Size(25, 25));
+            threshold(regulatedImg, regulatedImg, 100, 255, THRESH_OTSU);
 
-        // to test the svm, uncomment the code block above
-        // and comment the code below
-        return true;
+            Mat temp;
+            regulatedImg.copyTo(temp);
+
+            Mat data = temp.reshape(1, 1);
+
+            data.convertTo(data, CV_32FC1);
+            Ptr<SVM> svm = StatModel::load<SVM>("../ArmorDetector/isArmor.xml");
+
+            int result = (int)svm->predict(data);
+            if(result == 1) return true;
+            else return false;
     }
 
 

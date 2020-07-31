@@ -71,10 +71,10 @@
     <exposureMAX>1000</exposureMAX>
     <exposureMIN>600</exposureMIN>
     <frame>400</frame>
-    <brightness_threshold>210</brightness_threshold>
+    <brightness_threshold>120</brightness_threshold>
     <color_threshold>40</color_threshold>
     <light_color_detect_extend_ratio>1.1</light_color_detect_extend_ratio>
-    <light_min_area>10</light_min_area>
+    <light_min_area>150</light_min_area>
     <light_max_angle>45.0</light_max_angle>
     <light_min_size>5.0</light_min_size>
     <light_contour_min_solidity>0.5</light_contour_min_solidity>

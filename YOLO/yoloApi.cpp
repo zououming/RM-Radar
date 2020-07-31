@@ -2,12 +2,12 @@
 using namespace cv;
 
 yoloApi::yoloApi(){
-    cfg_file = "/home/zououming/RM-radar/YOLO/my_yolov3.cfg";
-    weight_file = "/home/zououming/RM-radar/YOLO/my_yolov3_900.weights";
-    class_file = "/home/zououming/RM-radar/YOLO/myData.names";
-    class_num = 1;
-    thresh = 0.3;
-    nms = 0.35;
+    cfg_file = "/home/zououming/RM-radar/YOLO/weightFile/my_yolov3.cfg";
+    weight_file = "/home/zououming/RM-radar/YOLO/weightFile/my_yolov3_26000.weights";
+    class_file = "/home/zououming/RM-radar/YOLO/weightFile/myData.names";
+    class_num = 2;
+    thresh = 0.9;
+    nms = 0.45;
 
     std::ifstream class_names_file(class_file);
     if(class_names_file.is_open()){
@@ -42,17 +42,22 @@ std::vector<cv::Rect> yoloApi::get_boxes(cv::Mat &img){
 
     if(nms)
         do_nms_sort(det, box_num, class_num, nms);
-
+//    std::cout<<"box"<<box_num<<std::endl;
     detect_boxes.clear();
+    detect_classes.clear();
 
     for(int i = 0; i < box_num; i++){
-        bool flag = false;
-        for(int j = 0; j < class_num; j++)
-            if(det[i].prob[j] > thresh)
-                if(!flag)
-                    flag = true;
+        float max_thresh = -1;
+        int class_numbering = -1;
+        for(int j = 0; j < class_num; j++){
+//            std::cout << det[i].prob[j] << std::endl << class_names_vec[j] << std::endl;
+            if(det[i].prob[j] > thresh && det[i].prob[j] > max_thresh) {
+                class_numbering = j;
+                max_thresh = det[i].prob[j];
+            }
+        }
 
-        if(flag){
+        if(class_numbering >= 0){
             int left = (det[i].bbox.x - det[i].bbox.w / 2.) * img.cols;
             int right = (det[i].bbox.x + det[i].bbox.w / 2.) * img.cols;
             int top = (det[i].bbox.y - det[i].bbox.h / 2.) * img.rows;
@@ -65,6 +70,7 @@ std::vector<cv::Rect> yoloApi::get_boxes(cv::Mat &img){
 
             Rect box(left, top, fabs(left - right), fabs(top - bot));
             detect_boxes.push_back(box);
+            detect_classes.push_back(class_names_vec[class_numbering]);
         }
     }
     free_detections(det, box_num);
@@ -82,6 +88,10 @@ std::vector<cv::Rect> yoloApi::get_boxes(cv::Mat &img){
     return detect_boxes;
 }
 
+std::vector<std::string> yoloApi::get_class(){
+    return detect_classes;
+}
+
 void yoloApi::img_convert(const cv::Mat &img, float *dst){
     uchar* data = img.data;
 
@@ -94,7 +104,7 @@ void yoloApi::img_convert(const cv::Mat &img, float *dst){
 void yoloApi::img_resize(float *src, float *dst, int srcWidth, int srcHeight, int dstWidth, int dstHeight){
     int new_w = srcWidth;
     int new_h = srcHeight;
-    if (((float)dstWidth / srcWidth) < ((float)dstHeight / srcHeight)) {
+    if(((float)dstWidth / srcWidth) < ((float)dstHeight / srcHeight)) {
         new_w = dstWidth;
         new_h = (srcHeight * dstWidth) / srcWidth;
     }

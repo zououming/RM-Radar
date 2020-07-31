@@ -54,10 +54,10 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
  *			   或者您可以重写调试交互模式。
  * 			3. remeber to change the path of pictures if using GET_ARMOR_PIC // 注意修改图片路径
  **************************************************************/
-#define DEBUG_PRETREATMENT
+//#define DEBUG_PRETREATMENT
 //#define DEBUG_DETECTION
 //#define DEBUG_THRESHOLD
-#define SHOW_RESULT
+//#define SHOW_RESULT
 //#define GET_ARMOR_PIC
 //#define DEBUG_HSV
 
@@ -154,13 +154,14 @@ namespace rm
          * @ param：
          * 		cv::RotatedRect& light // 输入旋转矩形
          * ***************************/
-        LightDescriptor(const cv::RotatedRect& light)
+        LightDescriptor(const cv::RotatedRect& light, int color)
         {
             width = light.size.width;		// 宽度
             length = light.size.height;		// 高度
             center = light.center;			// 中心
             angle = light.angle;			// 角度
             area = light.size.area();		// 面积
+            this->color = color;
         }
         const LightDescriptor& operator =(const LightDescriptor& ld)
         {
@@ -182,6 +183,7 @@ namespace rm
         }
 
     public:
+        int color;
         float width;
         float length;
         cv::Point2f center;
@@ -261,6 +263,7 @@ namespace rm
         float distScore;		//S2 = e^(-offset)
         float rotationScore;		//S3 = -(ratio^2 + yDiff^2)
         float finalScore;
+        int color;
 
         std::vector<cv::Point2f> vertex; //four vertex of armor area, lihgt bar area exclued!!装甲区四个顶点
         cv::Mat frontImg; //front img after prespective transformation from vertex,1 channel gray img
@@ -333,6 +336,7 @@ namespace rm
 
         void box_fix(cv::Rect &rect);
 
+        void brightness_adjust(cv::Mat &img, float alpha, int beta);
         /*
         *	@Brief: core of detection algrithm, include all the main detection process
         *			// 检测算法的核心，包括所有主要的检测过程
@@ -353,7 +357,7 @@ namespace rm
         *	@Return: See enum ArmorFlag
         *	@Others: API for client
         */
-        int track();
+        void track();
 
         /*
         *	@Brief: get the vertex of armor
@@ -392,17 +396,19 @@ namespace rm
         cv::Mat _srcImg; //source img		// 原图像
         cv::Mat _roiImg; //roi from the result of last frame // 最后一帧图像的ROI
         cv::Mat _grayImg; //gray img of roi	// ROI的灰度图
+        cv::Mat _binImg;
 
         int _trackCnt = 0;						// 跟踪数：0 ？
 
         std::vector<ArmorDescriptor> _armors;	// 装甲板
         std::vector<cv::Rect> YOLO_box;        // 存放yolo识别到的机器人位置
+        std::vector<std::string> YOLO_class;
         std::vector<RobotDescriptor> robot_box;
 
         Ptr<ml::SVM> svm;
         Ptr<cv::MultiTracker> trackers;
 
-        std::string armsList[7] = {"zero", "hero", "engineering", "infantry1", "infantry2", "infantry3", "Drone"};
+        std::string armsList[7] = {"Sentinel", "Hero", "Engineering", "Infantry1", "Infantry2", "Infantry3", "Drone"};
 
         ArmorDescriptor _targetArmor; //relative coordinates
 

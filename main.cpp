@@ -5,39 +5,25 @@ using namespace rm;
 
 //#define TEXT_PIC
 #ifdef TEXT_PIC
-using namespace std;
 
+using namespace std;
 int main(int argc, char * argv[]) {
     char * config_file_name = "../Settings/param_config.xml";
     Settings setting(config_file_name);
     OtherParam other_param;
-    std::mutex mutex;
     CameraClass camera(&setting);
-    ImageConsProd image_cons_prod(&setting, &other_param, &camera, &mutex);
+    ImageConsProd image_cons_prod(&setting, &other_param, &camera);
     image_cons_prod.ImageConsProd_init();
 
     image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
 //    for( int i = 4; i <= 12; i++ ) {
 //        string path = img_path + to_string(i) + ".jpg";
 
-    Mat img = imread("/home/zououming/darknet/data/person.jpg");
+    Mat img = imread("/home/zououming/Pictures/1.png");
     image_cons_prod.armor_detector->loadImg(img);
     image_cons_prod.armor_detector->find_robot();
     image_cons_prod.armor_detector->track();
     image_cons_prod.showImg(0);
-
-    img = imread("/home/zououming/darknet/data/horses.jpg");
-    image_cons_prod.armor_detector->loadImg(img);
-    image_cons_prod.armor_detector->find_robot();
-    image_cons_prod.armor_detector->track();
-    image_cons_prod.showImg(0);
-
-    img = imread("/home/zououming/darknet/data/dog.jpg");
-    image_cons_prod.armor_detector->loadImg(img);
-    image_cons_prod.armor_detector->find_robot();
-    image_cons_prod.armor_detector->track();
-    image_cons_prod.showImg(0);
-
 //    }
 }
 
@@ -64,10 +50,8 @@ int main(int argc, char * argv[]) {
     image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
 //    std::thread t1(&ImageConsProd::ImageProducer, image_cons_prod); // pass by reference
     std::thread t2(&ImageConsProd::ImageConsumer, image_cons_prod);
-#ifndef SHOW
-    thread t0(&ImageConsProd::showImg,image_cons_prod);
+    std::thread t0(&ImageConsProd::showImg, image_cons_prod, 1);
     t0.join();
-#endif
 //    t1.join();
     t2.join();
     camera.~CameraClass();

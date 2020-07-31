@@ -143,7 +143,7 @@ void ImageConsProd::ImageConsumer() {
     Mat src;
     std::string video_name="/home/zououming/Videos/1.mp4";
     VideoCapture cap_video(video_name);
-    VideoWriter writer("VideoTest.avi", CV_FOURCC('M', 'J', 'P', 'G'), 25.0, Size(1920, 1080));
+    VideoWriter writer("/home/zououming/RM-radar/cmake-build-debug/VideoTest.avi", CV_FOURCC('M', 'J', 'P', 'G'), 25.0, Size(1920/2, 1080/2));
 
     while (true)
     {
@@ -159,8 +159,9 @@ void ImageConsProd::ImageConsumer() {
             this->armor_detector->find_robot();
         this->armor_detector->track();
 
-        writer << armor_detector->getLastImg();
-        this->showImg(1);
+//        writer << armor_detector->getLastImg();
+//        waitKey(1);
+//        this->showImg(1);
         ui32FrameCount++;
         time (&lEnd);
         if (lEnd - lInit >= 1)
@@ -170,6 +171,7 @@ void ImageConsProd::ImageConsumer() {
             time (&lInit);
         }
     }
+    writer.release();
 #else
     while (true)
     {
@@ -208,10 +210,13 @@ void ImageConsProd::ImageConsumer() {
 }
 
 void ImageConsProd::showImg(int waitTime) {
-    Mat img = armor_detector->getLastImg();
-    imshow("last img", img);
-    if (waitTime >= 0)
-        waitKey(waitTime);
+    while(1) {
+        Mat img = armor_detector->getLastImg();
+        if(img.data != NULL)
+            imshow("last img", img);
+        if (waitTime >= 0)
+            waitKey(waitTime);
+    }
 }
 
 #ifndef SHOW

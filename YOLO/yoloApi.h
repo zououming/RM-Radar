@@ -9,6 +9,7 @@ public:
     yoloApi();
     ~yoloApi();
     std::vector<cv::Rect> get_boxes(cv::Mat &img);
+    std::vector<std::string> get_class();
 
 private:
     void img_convert(const cv::Mat &img, float *dst);
@@ -17,6 +18,7 @@ private:
 
 private:
     std::vector<cv::Rect> detect_boxes;
+    std::vector<std::string> detect_classes;
     std::vector<std::string> class_names_vec;
     std::string cfg_file, weight_file, class_file;
     network* net;
