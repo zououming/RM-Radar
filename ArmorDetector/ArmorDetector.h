@@ -407,7 +407,7 @@ namespace rm
         Ptr<ml::SVM> svm;
         Ptr<cv::MultiTracker> trackers;
 
-        std::string armsList[7] = {"Sentinel", "Hero", "Engineering", "Infantry1", "Infantry2", "Infantry3", "Drone"};
+        std::string armsList[8] = {"robot", "Hero", "Engineer", "Infantry1", "Infantry2", "Infantry3", "Drone", "Sentinel"};
 
         ArmorDescriptor _targetArmor; //relative coordinates
 

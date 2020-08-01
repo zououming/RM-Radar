@@ -3,7 +3,6 @@
 #define RM_NBUT2020_IMAGECONSPROD_H
 
 #include"../CameraClass/CameraClass.h"
-#include <mutex>
 //#define USE_VIDEO
 
 class ImageConsProd {
@@ -25,7 +24,6 @@ public:
     Settings *settings;
     CameraClass *cap;
     rm::ArmorDetector *armor_detector;
-    rm::AngleSolver *_solverPtr;
 };
 
 

@@ -163,11 +163,6 @@ CameraClass::CameraClass(Settings * settings1,SerialPort port) {
         this->armor_detector=new ArmorDetector();
 
         //Initialize angle solver
-        this->_solverPtr=new AngleSolver();
-        AngleSolverParam angleParam;
-        angleParam.readFile(8);
-        _solverPtr->init(angleParam);
-        _solverPtr->setResolution();
         _port=port;
         //_solverPtr->setResolution(_videoCapturePtr->getResolution());
 
@@ -298,78 +293,9 @@ GX_STATUS CameraClass::cameraMode() {
         GX_VERIFY_EXIT(emStatus);
     }
 }
-void CameraClass::detectingThread() {
-    sleep(2);
-    //this->armor_detector->setEnemyColor(BLUE);
-    //Mat src;
-
-    /* Variables for angle solve module */
-    int angleFlag;
-    Vec2f targetAngle;
-
-    /* Variables for armor detector modeule */
-    int armorFlag;
-    int armorType;
-    time_t lInit;
-    time_t lEnd;
-    uint32_t ui32FrameCount = 0;
-    uint32_t ui32AcqFrameRate = 0;
-    std::vector<cv::Point2f> armorVertex;
-    time(&lInit);
-    for(;;){
-        if(!ui32FrameCount)
-        {
-            time(&lInit);
-        }
-        Mat src=*m_p;
-        this->armor_detector->loadImg(src);
-        //src=imread("/home/bazinga/CLionProjects/RM_nbut2020/1.jpg");
-//        armorFlag=this->armor_detector->detect();
-        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
-        {
-//            this->armor_detector->Kalman4f();
-            armorVertex = this->armor_detector->getArmorVertex();
-            armorType = this->armor_detector->getArmorType();
-
-            _solverPtr->setTarget(armorVertex, armorType);
-            angleFlag = _solverPtr->solve();
-            if(angleFlag != rm::AngleSolver::ANGLE_ERROR)
-            {
-                targetAngle = _solverPtr->getCompensateAngle();
-
-                std::cout << "Deviation1: " << targetAngle << std::endl;
-                std::cout << "Distance:"<<_solverPtr->getDistance() << std::endl;
-#ifndef SERIAL
-                vdata={targetAngle[0],targetAngle[1],(float)_solverPtr->getDistance(),0,1,0};
-                _port.TransformData(vdata);
-                _port.send();
-#endif
-            }
-
-        }
-        ui32FrameCount++;
-        time (&lEnd);
-        if (lEnd - lInit >= 1)
-        {
-            std::cout<<"每秒"<<ui32FrameCount<<std::endl;
-            ui32FrameCount = 0;
-        }
-
-        //cout << "Deviation: " << targetAngle << endl;
-        //cout<<i<<endl;
-#ifndef SHOW
-//        if (i){
-            imshow("11",src);
-            waitKey(1);
-//        }
-#endif
-    }
-}
 
 void CameraClass::ProcGetImage() {
-
     GX_STATUS emStatus = GX_STATUS_SUCCESS;
-
 
     //Thread running flag setup
     g_bAcquisitionFlag = true;

@@ -19,7 +19,7 @@ int main(int argc, char * argv[]) {
 //    for( int i = 4; i <= 12; i++ ) {
 //        string path = img_path + to_string(i) + ".jpg";
 
-    Mat img = imread("/home/zououming/Pictures/vlcsnap-2020-07-31-20h57m32s732.png");
+    Mat img = imread("/home/zououming/Pictures/vlcsnap-2020-08-01-14h44m11s349.png");
     image_cons_prod.armor_detector->loadImg(img);
     image_cons_prod.armor_detector->find_robot();
     image_cons_prod.armor_detector->track();
@@ -49,12 +49,12 @@ int main(int argc, char * argv[]) {
     image_cons_prod.ImageConsProd_init();
     image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
 
-    std::thread t0(&ImageConsProd::showImg, image_cons_prod, -1);
-    std::thread t1(&ImageConsProd::ImageProducer, image_cons_prod); // pass by reference
+//    std::thread t0(&ImageConsProd::showImg, image_cons_prod, -1);
+//    std::thread t1(&ImageConsProd::ImageProducer, image_cons_prod); // pass by reference
     std::thread t2(&ImageConsProd::ImageConsumer, image_cons_prod);
 
-    t0.join();
-    t1.join();
+//    t0.join();
+//    t1.join();
     t2.join();
     camera.~CameraClass();
     destroyAllWindows();

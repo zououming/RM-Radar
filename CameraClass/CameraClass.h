@@ -8,7 +8,6 @@
 #include "../Settings/Settings.hpp"
 #include "../Serial/serialport.h"
 #include "../ArmorDetector/ArmorDetector.h"
-#include "../Pose/AngleSolver.hpp"
 #include "GxIAPI.h"
 #include "DxImageProc.h"
 #include <stdio.h>
@@ -88,7 +87,6 @@ public:
     Settings *settings;
     OtherParam *other_param;
     rm::ArmorDetector *armor_detector;
-    rm::AngleSolver *_solverPtr;
 
     SerialPort _port;
     VisionData vdata;

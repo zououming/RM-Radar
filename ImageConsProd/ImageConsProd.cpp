@@ -42,9 +42,9 @@ void ImageConsProd::ImageProducer() {
     uint32_t ui32FrameCount = 0;
     uint32_t ui32AcqFrameRate = 0;
     emStatus = GXDQBuf(cap->g_hDevice, &pFrameBuffer, this->settings->camera_Enum);
+    emStatus = GXSetFloat(cap->g_hDevice, GX_FLOAT_EXPOSURE_TIME, 3000);
     m_pss.create(pFrameBuffer->nHeight,pFrameBuffer->nWidth,CV_8UC3);
     cap->m_p=&m_pss;
-
     while(cap->g_bAcquisitionFlag)
     {
         if(!ui32FrameCount)
@@ -58,9 +58,7 @@ void ImageConsProd::ImageProducer() {
         if(emStatus != GX_STATUS_SUCCESS)
         {
             if (emStatus == GX_STATUS_TIMEOUT)
-            {
                 continue;
-            }
             else
             {
                 cap->GetErrorString(emStatus);
@@ -79,9 +77,7 @@ void ImageConsProd::ImageProducer() {
         //imshow("xj",m_p);
         //waitKey(30);
         if(pFrameBuffer->nStatus != GX_FRAME_STATUS_SUCCESS)
-        {
             printf("<Abnormal Acquisition: Exception code: %d>\n", pFrameBuffer->nStatus);
-        }
         else
         {
             ui32FrameCount++;
@@ -141,7 +137,7 @@ void ImageConsProd::ImageConsumer() {
 
 #ifdef USE_VIDEO
     Mat src;
-    std::string video_name="/home/zououming/Videos/3.mp4";
+    std::string video_name="/home/zououming/5.mp4";
     VideoCapture cap_video(video_name);
     VideoWriter writer("/home/zououming/RM-radar/cmake-build-debug/VideoTest.avi", CV_FOURCC('M', 'J', 'P', 'G'), 25.0, Size(1920/2, 1080/2));
 
@@ -190,7 +186,7 @@ void ImageConsProd::ImageConsumer() {
 
         this->armor_detector->track();
 //        writer << armor_detector->getLastImg();
-//        this->showImg(1);
+        this->showImg(0);
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
 //        {
 //            this->armor_detector->Kalman4f();
@@ -216,7 +212,6 @@ void ImageConsProd::showImg(int waitTime) {
         uint32_t ui32FrameCount = 0;
         while (1) {
             if (armor_detector->deal) {
-                time(&lEnd);
                 Mat img = armor_detector->getLastImg();
                 if (img.data != NULL)
                     imshow("last img", img);
@@ -224,6 +219,7 @@ void ImageConsProd::showImg(int waitTime) {
                 armor_detector->deal = false;
                 ui32FrameCount++;
             }
+            time(&lEnd);
             if(lEnd - lInit >= 1){
                 std::cout << "显示:" << ui32FrameCount << std::endl;
                 ui32FrameCount = 0;

@@ -20,11 +20,6 @@ add_executable(RM_radar main.cpp
 
         Settings/Settings.hpp
 
-        Energy/Energy.hpp
-
-        Pose/AngleSolver.hpp
-        Pose/AngleSolver.cpp
-
         Serial/CRC_Check.h  
         Serial/CRC_Check.cpp
         Serial/serialport.cpp

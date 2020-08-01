@@ -2,12 +2,12 @@
 using namespace cv;
 
 yoloApi::yoloApi(){
-    cfg_file = "/home/zououming/RM-radar/YOLO/weightFile/my_yolov3.cfg";
-    weight_file = "/home/zououming/RM-radar/YOLO/weights3/my_yolov3_5000.weights";
-    class_file = "/home/zououming/RM-radar/YOLO/weightFile/myData.names";
+    cfg_file = "../YOLO/weightFile/my_yolov3.cfg";
+    weight_file = "../YOLO/weights3/my_yolov3_22000.weights";
+    class_file = "../YOLO/weightFile/myData.names";
     class_num = 2;
-    thresh = 0.9;
-    nms = 0.45;
+    thresh = 0.7;
+    nms = 0.1;
 
     std::ifstream class_names_file(class_file);
     if(class_names_file.is_open()){
@@ -42,7 +42,7 @@ std::vector<cv::Rect> yoloApi::get_boxes(cv::Mat &img){
 
     if(nms)
         do_nms_sort(det, box_num, class_num, nms);
-//    std::cout<<"box"<<box_num<<std::endl;
+
     detect_boxes.clear();
     detect_classes.clear();
 
@@ -50,7 +50,6 @@ std::vector<cv::Rect> yoloApi::get_boxes(cv::Mat &img){
         float max_thresh = -1;
         int class_numbering = -1;
         for(int j = 0; j < class_num; j++){
-//            std::cout << det[i].prob[j] << std::endl << class_names_vec[j] << std::endl;
             if(det[i].prob[j] > thresh && det[i].prob[j] > max_thresh) {
                 class_numbering = j;
                 max_thresh = det[i].prob[j];

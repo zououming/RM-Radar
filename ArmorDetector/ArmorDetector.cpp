@@ -245,7 +245,7 @@ namespace rm
         _isTracking = false;
 
         YOLOv3 = new yoloApi();
-        svm = StatModel::load<SVM>("../ArmorDetector/svm_arms.xml");
+        svm = StatModel::load<SVM>("../ArmorDetector/svm_arms19.xml");
 
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
         _debugWindowName = "debug info";
@@ -323,7 +323,6 @@ namespace rm
         YOLO_box = YOLOv3->get_boxes(_srcImg);
         YOLO_class = YOLOv3->get_class();
 
-        cout<<"find:"<<YOLO_box.size()<<endl;
         if (!YOLO_box.size())
             return;
         cvtColor(_srcImg, _grayImg, COLOR_BGR2GRAY, 1);
@@ -331,7 +330,7 @@ namespace rm
         for (int i = 0; i < YOLO_box.size(); i++) {
             box_fix(YOLO_box[i]);
             RobotDescriptor robot = detect(YOLO_box[i]);
-            robot.team = YOLO_class[i] == "blue robot"? rm::RED: rm::BLUE;
+            robot.team = YOLO_class[i] == "blue robot"? rm::BLUE: rm::RED;
             robot_box.emplace_back(robot);
             trackers->add(cv::TrackerKCF::create(), _srcImg, robot.position);
         }
@@ -611,18 +610,18 @@ namespace rm
             return !(i.isArmorPattern());
         }), _armors.end());
 
-        if (_armors.empty()) {
-            if(lightInfos.size() > 0) {
-                sort(lightInfos.begin(), lightInfos.end(), [](const LightDescriptor &ld1, const LightDescriptor &ld2) {
-                    return ld1.area > ld2.area;
-                });
-                this_robot.team = lightInfos[0].color;
-                for (auto &lightInfo : lightInfos)
-                    if (lightInfo.area > 400 && lightInfo.area < 600)
-                        this_robot.team = lightInfo.color;
-            }
-        }
-        else if (_armors.size() > 0) {
+//        if (_armors.empty()) {
+//            if(lightInfos.size() > 0) {
+//                sort(lightInfos.begin(), lightInfos.end(), [](const LightDescriptor &ld1, const LightDescriptor &ld2) {
+//                    return ld1.area > ld2.area;
+//                });
+//                this_robot.team = lightInfos[0].color;
+//                for (auto &lightInfo : lightInfos)
+//                    if (lightInfo.area > 400 && lightInfo.area < 600)
+//                        this_robot.team = lightInfo.color;
+//            }
+//        }
+        if (_armors.size() > 0) {
             _targetArmor = _armors[0];
             Pre_GetCenter();
             armorImg = _targetArmor.frontImg;
@@ -649,6 +648,7 @@ namespace rm
         resize(regulatedImg, regulatedImg, Size(25, 25));
         threshold(regulatedImg, regulatedImg, 100, 255, THRESH_OTSU);
         imshow("armor", regulatedImg);
+//        imwrite("../123"+to_string(rand())+".jpg", regulatedImg);
         Mat data = regulatedImg.reshape(1, 1);
 
         data.convertTo(data, CV_32FC2);
@@ -673,19 +673,14 @@ namespace rm
             robot_box[i].position = new_position[i];
             line_color = robot_box[i].team == rm::RED ? cvex::RED : cvex::BLUE;
             team = robot_box[i].team == rm::RED ? "red" : "blue";
-            if (robot_box[i].team == rm::GREEN) {
-                line_color = cvex::YELLOW;
-                team = "?";
-            }
 
-            text = team == "?" ? "?" : team + " " + robot_box[i].arms;
+            text = team + " " + robot_box[i].arms;
             rectangle(_roiImg, robot_box[i].position, line_color, 2, 1);
 
             Point text_point(int(robot_box[i].position.x), int(robot_box[i].position.y - 2));
             putText(_roiImg, text, text_point, FONT_HERSHEY_SIMPLEX, 0.8, line_color, 2);
         }
         deal = true;
-
     }
 
     Mat ArmorDetector::getLastImg() {
@@ -722,22 +717,17 @@ namespace rm
 
     bool ArmorDescriptor::isArmorPattern() const
     {
-            Mat regulatedImg;
-            if(type == BIG_ARMOR)
-                regulatedImg = frontImg(Rect(21, 0, 50, 50));
-            else
-                regulatedImg = frontImg;
+            Mat regulatedImg = frontImg;
 
-            resize(regulatedImg,regulatedImg, Size(25, 25));
+            resize(regulatedImg, regulatedImg, Size(25, 25));
             threshold(regulatedImg, regulatedImg, 100, 255, THRESH_OTSU);
 
             Mat temp;
             regulatedImg.copyTo(temp);
-
             Mat data = temp.reshape(1, 1);
 
             data.convertTo(data, CV_32FC1);
-            Ptr<SVM> svm = StatModel::load<SVM>("../ArmorDetector/isArmor.xml");
+            Ptr<SVM> svm = StatModel::load<SVM>("../ArmorDetector/isArmor19.xml");
 
             int result = (int)svm->predict(data);
             if(result == 1) return true;
