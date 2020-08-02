@@ -1,20 +1,7 @@
 #include "../ImageConsProd/ImageConsProd.h"
 
-//#define USE_VIDEO
 
 void ImageConsProd::ImageConsProd_init() {
-#ifndef USE_VIDEO
-    GX_STATUS emStatus=cap->cameraInit();
-    if(emStatus != GX_STATUS_SUCCESS){
-        std::cout<<"初始化错误";
-        return ;
-    }
-    emStatus=cap->cameraMode();
-    if(emStatus != GX_STATUS_SUCCESS){
-        std::cout<<"设置错误";
-        return ;
-    }
-#endif
     this->cap->settings = this->settings;   //cap是一个相机类，这个类里面也有很多要用到setting的，所以要让相机里面本身的setting变成当前的xml
     this->armor_detector = this->cap->armor_detector;
 
@@ -73,7 +60,7 @@ void ImageConsProd::ImageProducer() {
         //cvtColor(m_pss, *m_p, CV_BGR2RGB);
         //imwrite("/home/bazinga/CLionProjects/RM_nbut2020/1.jpg",m_pss);
         //resize(m_p, imgs, Size(640,480), (0, 0), (0, 0),INTER_LINEAR);
-        cap->img=true;
+        cap->img = true;
         //imshow("xj",m_p);
         //waitKey(30);
         if(pFrameBuffer->nStatus != GX_FRAME_STATUS_SUCCESS)
@@ -185,7 +172,6 @@ void ImageConsProd::ImageConsumer() {
             this->armor_detector->find_robot();
 
         this->armor_detector->track();
-//        writer << armor_detector->getLastImg();
         this->showImg(0);
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
 //        {

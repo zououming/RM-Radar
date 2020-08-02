@@ -34,7 +34,9 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
 #include<opencv2/ml.hpp>
 #include "../Settings/Settings.hpp"
 #include<string>
-//using namespace std;
+#ifdef GPU
+#include "cuda_runtime.h"
+#endif
 
 /**************************************************************
  * DEBUG_PRETREATMENT 	only shows the image after the simple pretreatment	// 预处理
@@ -59,6 +61,7 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
 //#define DEBUG_THRESHOLD
 //#define SHOW_RESULT
 //#define GET_ARMOR_PIC
+#define GPU
 
 namespace rm
 {
@@ -396,6 +399,11 @@ namespace rm
         cv::Mat _srcImg; //source img		// 原图像
         cv::Mat _roiImg; //roi from the result of last frame // 最后一帧图像的ROI
         cv::Mat _grayImg; //gray img of roi	// ROI的灰度图
+
+#ifdef GPU
+        cuda::GpuMat gpuSrcImg;
+        cuda::GpuMat gpuGrayImg;
+#endif
 
         int _trackCnt = 0;						// 跟踪数：0 ？
 

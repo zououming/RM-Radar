@@ -2,7 +2,6 @@
 #include "Serial/serialport.h"
 #include "ImageConsProd/ImageConsProd.h"
 using namespace rm;
-
 //#define TEXT_PIC
 #ifdef TEXT_PIC
 
@@ -34,10 +33,6 @@ int main(int argc, char * argv[]) {
         config_file_name = argv[1];
     Settings setting(config_file_name);
     OtherParam other_param;
-    // communicate with car
-    //int fd2car = openPort("/dev/ttyTHS2");
-    //configurePort(fd2car);
-    //Mat *m_p= nullptr;
 #ifndef SERIAL
     SerialPort port("/dev/ttyUSB0"); // 利用udev给TTL-USB串口模块重新命名(解决/dev/ttyUSB0突变成/dev/ttyUSB1的问题)
     port.initSerialPort();
@@ -49,15 +44,21 @@ int main(int argc, char * argv[]) {
     image_cons_prod.ImageConsProd_init();
     image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
 
-//    std::thread t0(&ImageConsProd::showImg, image_cons_prod, -1);
-//    std::thread t1(&ImageConsProd::ImageProducer, image_cons_prod); // pass by reference
+#ifdef USE_VIDEO
+    std::thread t2(&ImageConsProd::ImageConsumer, image_cons_prod);
+    t2.join();
+
+#else
+    std::thread t0(&ImageConsProd::showImg, image_cons_prod, -1);
+    std::thread t1(&ImageConsProd::ImageProducer, image_cons_prod); // pass by reference
     std::thread t2(&ImageConsProd::ImageConsumer, image_cons_prod);
 
-//    t0.join();
-//    t1.join();
+    t0.join();
+    t1.join();
     t2.join();
     camera.~CameraClass();
     destroyAllWindows();
     return 0;
+#endif //USE_VIDEO
 }
 #endif

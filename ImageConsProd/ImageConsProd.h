@@ -3,7 +3,7 @@
 #define RM_NBUT2020_IMAGECONSPROD_H
 
 #include"../CameraClass/CameraClass.h"
-//#define USE_VIDEO
+#define USE_VIDEO
 
 class ImageConsProd {
 public:

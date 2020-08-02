@@ -325,7 +325,13 @@ namespace rm
 
         if (!YOLO_box.size())
             return;
+#ifdef GPU
+        gpuSrcImg.upload(_srcImg);
+        cuda::cvtColor(gpuSrcImg, gpuGrayImg, COLOR_BGR2GRAY, 1);
+        gpuGrayImg.download(_grayImg);
+#else
         cvtColor(_srcImg, _grayImg, COLOR_BGR2GRAY, 1);
+#endif GPU
 
         for (int i = 0; i < YOLO_box.size(); i++) {
             box_fix(YOLO_box[i]);
@@ -364,15 +370,28 @@ namespace rm
         {
             float rate = float(robot_rect.height) / 450;
             Size enlarge_size(int(robot_rect.width/rate), int(robot_rect.height/rate));
+#ifdef GPU
+            cuda::GpuMat src, gray, bin;
+            src.upload(_srcImg(robot_rect));
+            gray.upload(_grayImg(robot_rect));
+
+            cuda::resize(src, src, enlarge_size);
+            cuda::resize(gray, gray, enlarge_size);
+            cuda::threshold(gray, bin, _param.brightness_threshold, 255, cv::THRESH_BINARY);
+
+            src.download(this_robot_src);
+            gray.download(this_robot_gray);
+            bin.download(this_robot_bin);
+#else
             this_robot_src = _srcImg(robot_rect);
             this_robot_gray = _grayImg(robot_rect);
-
             resize(this_robot_src, this_robot_src, enlarge_size);
             resize(this_robot_gray, this_robot_gray, enlarge_size);
 
-            cv::threshold(this_robot_gray, this_robot_bin, _param.brightness_threshold, 255, cv::THRESH_BINARY);
+            cv::threshold(this_robot_gray, this_robot_bin, _param.brightness_threshold, 255, cv::THRESH_BINARY);;
+#endif
             element = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));//tuoyuan
-            dilate(this_robot_bin, this_robot_bin, element);
+            cv::dilate(this_robot_bin, this_robot_bin, element);
 #ifdef DEBUG_THRESHOLD
             {
                 double alpha = 0.8;
