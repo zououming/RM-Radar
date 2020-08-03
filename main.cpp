@@ -33,6 +33,7 @@ int main(int argc, char * argv[]) {
         config_file_name = argv[1];
     Settings setting(config_file_name);
     OtherParam other_param;
+    Radar radar;
 #ifndef SERIAL
     SerialPort port("/dev/ttyUSB0"); // 利用udev给TTL-USB串口模块重新命名(解决/dev/ttyUSB0突变成/dev/ttyUSB1的问题)
     port.initSerialPort();
@@ -40,7 +41,7 @@ int main(int argc, char * argv[]) {
 #else
     CameraClass camera(&setting);
 #endif
-    ImageConsProd image_cons_prod(&setting, &other_param, &camera);
+    ImageConsProd image_cons_prod(&setting, &other_param, &camera, &radar);
     image_cons_prod.ImageConsProd_init();
     image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
 

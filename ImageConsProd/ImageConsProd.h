@@ -2,17 +2,19 @@
 #ifndef RM_NBUT2020_IMAGECONSPROD_H
 #define RM_NBUT2020_IMAGECONSPROD_H
 
-#include"../CameraClass/CameraClass.h"
+#include "../CameraClass/CameraClass.h"
+#include "../Radar/Radar.h"
 #define USE_VIDEO
 
 class ImageConsProd {
 public:
     ImageConsProd();
-    ImageConsProd(Settings * _settings, OtherParam *_otherParam, CameraClass *cap1)
+    ImageConsProd(Settings * _settings, OtherParam *_otherParam, CameraClass *_cap, Radar *_radar)
     {
         settings = _settings;
-        cap = cap1;
+        cap = _cap;
         otherParam = _otherParam;
+        radar = _radar;
     }
     void ImageProducer();
     void ImageConsumer();
@@ -24,6 +26,7 @@ public:
     Settings *settings;
     CameraClass *cap;
     rm::ArmorDetector *armor_detector;
+    Radar *radar;
 };
 
 

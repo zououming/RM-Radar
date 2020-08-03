@@ -29,6 +29,9 @@ add_executable(RM_radar main.cpp
 
         YOLO/yoloApi.h
         YOLO/yoloApi.cpp
+
+        Radar/Radar.h
+        Radar/Radar.cpp
         )
 
 target_link_libraries (RM_radar

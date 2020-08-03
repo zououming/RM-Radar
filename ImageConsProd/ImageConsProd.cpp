@@ -137,12 +137,12 @@ void ImageConsProd::ImageConsumer() {
         }
         resize(src, src, Size(1920/2, 1080/2));
 
-        this->armor_detector->loadImg(src);
+        this->radar->load_img(src);
         if(ui32FrameCount % this->settings->track_frame == 0)
-            this->armor_detector->find_robot();
-        this->armor_detector->track();
+            this->radar->find_robot();
+        this->radar->track();
 
-        writer << armor_detector->getLastImg();
+        writer << radar->getLastImg();
         waitKey(1);
         this->showImg(1);
         ui32FrameCount++;
@@ -197,12 +197,12 @@ void ImageConsProd::showImg(int waitTime) {
         time(&lInit);
         uint32_t ui32FrameCount = 0;
         while (1) {
-            if (armor_detector->deal) {
-                Mat img = armor_detector->getLastImg();
+            if (radar->deal) {
+                Mat img = radar->getLastImg();
                 if (img.data != NULL)
                     imshow("last img", img);
                 waitKey(1);
-                armor_detector->deal = false;
+                radar->deal = false;
                 ui32FrameCount++;
             }
             time(&lEnd);
@@ -214,7 +214,7 @@ void ImageConsProd::showImg(int waitTime) {
         }
     }
     else {
-        Mat img = armor_detector->getLastImg();
+        Mat img = radar->getLastImg();
         if (img.data != NULL)
             imshow("last img", img);
         waitKey(waitTime);

@@ -244,7 +244,6 @@ namespace rm
         _roi = Rect(cv::Point(0, 0), _srcImg.size());
         _isTracking = false;
 
-        YOLOv3 = new yoloApi();
         svm = StatModel::load<SVM>("../ArmorDetector/svm_arms19.xml");
 
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
@@ -283,10 +282,10 @@ namespace rm
         _param = armorParam;
     }
 
-    void ArmorDetector::loadImg(const cv::Mat& srcImg)			// 读取图片
+    void ArmorDetector::loadImg(const cv::Mat& srcImg, const cv::Mat& grayImg)			// 读取图片
     {
         _srcImg = srcImg;
-
+        _grayImg = grayImg;
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
         _debugImg = srcImg.clone();
 #endif // DEBUG_DETECTION || SHOW_RESULT
@@ -313,51 +312,6 @@ namespace rm
 #endif // DEBUG_DETECTION
     }
 
-    void ArmorDetector::find_robot()
-    {
-        YOLO_box.clear();
-        YOLO_class.clear();
-        robot_box.clear();
-        trackers = MultiTracker::create();
-
-        YOLO_box = YOLOv3->get_boxes(_srcImg);
-        YOLO_class = YOLOv3->get_class();
-
-        if (!YOLO_box.size())
-            return;
-#ifdef GPU
-        gpuSrcImg.upload(_srcImg);
-        cuda::cvtColor(gpuSrcImg, gpuGrayImg, COLOR_BGR2GRAY, 1);
-        gpuGrayImg.download(_grayImg);
-#else
-        cvtColor(_srcImg, _grayImg, COLOR_BGR2GRAY, 1);
-#endif GPU
-
-        for (int i = 0; i < YOLO_box.size(); i++) {
-            box_fix(YOLO_box[i]);
-            RobotDescriptor robot = detect(YOLO_box[i]);
-            robot.team = YOLO_class[i] == "blue robot"? rm::BLUE: rm::RED;
-            robot_box.emplace_back(robot);
-            trackers->add(cv::TrackerKCF::create(), _srcImg, robot.position);
-        }
-    }
-
-    void ArmorDetector::brightness_adjust(cv::Mat &img, float alpha, int beta)
-    {
-        for( int y = 0; y < img.rows; y++ )
-            for( int x = 0; x < img.cols; x++ )
-                for( int c = 0; c < 3; c++ )
-                    img.at<Vec3b>(y, x)[c] = alpha * img.at<Vec3b>(y, x)[c] + beta;
-    }
-
-
-    void ArmorDetector::box_fix(cv::Rect &rect)
-    {
-        if (rect.x + rect.width > _srcImg.size[1] - 1)
-            rect.x = _srcImg.size[1] - 1 - rect.width;
-        if (rect.y + rect.height > _srcImg.size[0] - 1)
-            rect.y = _srcImg.size[0] - 1 - rect.height;
-    }
 
 
     RobotDescriptor ArmorDetector::detect(const cv::Rect &robot_rect)
@@ -667,7 +621,7 @@ namespace rm
         resize(regulatedImg, regulatedImg, Size(25, 25));
         threshold(regulatedImg, regulatedImg, 100, 255, THRESH_OTSU);
         imshow("armor", regulatedImg);
-//        imwrite("../123"+to_string(rand())+".jpg", regulatedImg);
+//        imwrite("../123/"+to_string(rand())+".jpg", regulatedImg);
         Mat data = regulatedImg.reshape(1, 1);
 
         data.convertTo(data, CV_32FC2);
@@ -676,30 +630,6 @@ namespace rm
 
         waitKey(1);
         return armsList[result];
-    }
-
-
-    void ArmorDetector::track() {
-        if (trackers->empty())
-            return;
-        trackers->update(_srcImg);
-        _roiImg = _srcImg.clone();
-        vector<Rect_<double>> new_position = trackers->getObjects();
-
-        cv::Scalar line_color(0, 0, 0);
-        string team, text;
-        for (int i = 0; i < robot_box.size(); i++) {
-            robot_box[i].position = new_position[i];
-            line_color = robot_box[i].team == rm::RED ? cvex::RED : cvex::BLUE;
-            team = robot_box[i].team == rm::RED ? "red" : "blue";
-
-            text = team + " " + robot_box[i].arms;
-            rectangle(_roiImg, robot_box[i].position, line_color, 2, 1);
-
-            Point text_point(int(robot_box[i].position.x), int(robot_box[i].position.y - 2));
-            putText(_roiImg, text, text_point, FONT_HERSHEY_SIMPLEX, 0.8, line_color, 2);
-        }
-        deal = true;
     }
 
     Mat ArmorDetector::getLastImg() {

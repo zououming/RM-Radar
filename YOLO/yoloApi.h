@@ -4,6 +4,16 @@
 
 //#define SHOW_BOX
 
+/*
+* 	@Brief： This structure describes the team, unit, and location of the robot
+*	// 这个结构体描述机器人的队伍,兵种,位置等
+*/
+struct RobotDescriptor {
+    int team;
+    std::string arms;
+    cv::Rect2d position;
+};
+
 class yoloApi {
 public:
     yoloApi();
