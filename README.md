@@ -1,6 +1,6 @@
 # RM-nbut2020
 nbut robomater视觉组2020
 
-YOLO 提供darknet框架的API
+YOLO 实现darknet框架的调用
 
 Radar 实现雷达功能
