@@ -5,11 +5,13 @@
 //#define SHOW_BOX
 
 /*
-* 	@Brief： This structure describes the team, unit, and location of the robot
-*	// 这个结构体描述机器人的队伍,兵种,位置等
+* 	@Brief： This structure describes the team, color, number, unit, location, etc. of the robot
+*	// 这个结构体描述机器人的队伍,颜色,编号,兵种,位置等
 */
 struct RobotDescriptor {
     int team;
+    cv::Scalar color;
+    int numbering;
     std::string arms;
     cv::Rect2d position;
 };

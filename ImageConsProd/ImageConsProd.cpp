@@ -122,6 +122,8 @@ void ImageConsProd::ImageConsumer() {
     std::vector<cv::Point2f> armorVertex;
     time(&lInit);
 
+    armor_detector->setEnemyColor(rm::BLUE);
+
 #ifdef USE_VIDEO
     Mat src;
     std::string video_name="/home/zououming/5.mp4";
@@ -144,7 +146,7 @@ void ImageConsProd::ImageConsumer() {
 
         writer << radar->getLastImg();
         waitKey(1);
-        this->showImg(1);
+        showImg(1);
         ui32FrameCount++;
         time (&lEnd);
         if (lEnd - lInit >= 1)
@@ -155,7 +157,9 @@ void ImageConsProd::ImageConsumer() {
         }
     }
     writer.release();
+
 #else
+    radar->get_transformation_mat();
     while (true)
     {
         Mat src = cap->m_p->clone();
@@ -172,7 +176,7 @@ void ImageConsProd::ImageConsumer() {
             this->armor_detector->find_robot();
 
         this->armor_detector->track();
-        this->showImg(0);
+        this->showImg(1);
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
 //        {
 //            this->armor_detector->Kalman4f();
@@ -199,8 +203,11 @@ void ImageConsProd::showImg(int waitTime) {
         while (1) {
             if (radar->deal) {
                 Mat img = radar->getLastImg();
+                Mat map = radar->getLastMap();
                 if (img.data != NULL)
                     imshow("last img", img);
+                if (map.data != NULL)
+                    imshow("map", map);
                 waitKey(1);
                 radar->deal = false;
                 ui32FrameCount++;

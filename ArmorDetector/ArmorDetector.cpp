@@ -316,7 +316,7 @@ namespace rm
 
     RobotDescriptor ArmorDetector::detect(const cv::Rect &robot_rect)
     {
-        RobotDescriptor this_robot{rm::GREEN, "robot", robot_rect};
+        RobotDescriptor this_robot{rm::GREEN, Scalar(0, 0, 0), -1, "robot", robot_rect};
         cv::Mat armorImg, element;
         cv::Mat this_robot_src, this_robot_gray, this_robot_bin;
 
@@ -599,7 +599,8 @@ namespace rm
             Pre_GetCenter();
             armorImg = _targetArmor.frontImg;
             this_robot.team = _targetArmor.color;
-            this_robot.arms = armsClassification(armorImg);
+            this_robot.numbering = armsClassification(armorImg);
+            this_robot.arms = armsList[this_robot.numbering];
         }
 
         _trackCnt++;
@@ -613,7 +614,7 @@ namespace rm
         return this_robot;
     }
 
-    std::string ArmorDetector::armsClassification(const cv::Mat &roiImg)
+    int ArmorDetector::armsClassification(const cv::Mat &roiImg)
     {
         Mat regulatedImg;
 
@@ -629,7 +630,7 @@ namespace rm
         int result = svm->predict(data);
 
         waitKey(1);
-        return armsList[result];
+        return result;
     }
 
     Mat ArmorDetector::getLastImg() {

@@ -2,7 +2,7 @@
 #include "Serial/serialport.h"
 #include "ImageConsProd/ImageConsProd.h"
 using namespace rm;
-//#define TEXT_PIC
+#define TEXT_PIC
 #ifdef TEXT_PIC
 
 using namespace std;
@@ -11,17 +11,19 @@ int main(int argc, char * argv[]) {
     Settings setting(config_file_name);
     OtherParam other_param;
     CameraClass camera(&setting);
-    ImageConsProd image_cons_prod(&setting, &other_param, &camera);
+    Radar radar;
+
+    ImageConsProd image_cons_prod(&setting, &other_param, &camera, &radar);
     image_cons_prod.ImageConsProd_init();
 
+    image_cons_prod.radar->set_enemy_color(rm::BLUE);
     image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
-//    for( int i = 4; i <= 12; i++ ) {
-//        string path = img_path + to_string(i) + ".jpg";
 
-    Mat img = imread("/home/zououming/Pictures/vlcsnap-2020-08-01-14h44m11s349.png");
-    image_cons_prod.armor_detector->loadImg(img);
-    image_cons_prod.armor_detector->find_robot();
-    image_cons_prod.armor_detector->track();
+    Mat img = imread("/home/zououming/Pictures/1233.png");
+    image_cons_prod.radar->load_img(img);
+    image_cons_prod.radar->get_transformation_mat();
+    image_cons_prod.radar->find_robot();
+    image_cons_prod.radar->track();
     image_cons_prod.showImg(0);
 //    }
 }
@@ -42,6 +44,17 @@ int main(int argc, char * argv[]) {
     CameraClass camera(&setting);
 #endif
     ImageConsProd image_cons_prod(&setting, &other_param, &camera, &radar);
+    GX_STATUS emStatus=camera.cameraInit();
+    if(emStatus != GX_STATUS_SUCCESS){
+        cout<<"初始化错误";
+        return 0;
+    }
+    emStatus=cameraClass1->cameraMode();
+    if(emStatus != GX_STATUS_SUCCESS){
+        cout<<"设置错误";
+        return 0;
+    }
+
     image_cons_prod.ImageConsProd_init();
     image_cons_prod.armor_detector->setEnemyColor(rm::BLUE);
 

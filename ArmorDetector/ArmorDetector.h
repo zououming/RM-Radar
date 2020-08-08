@@ -308,14 +308,7 @@ namespace rm
         */
         void loadImg(const cv::Mat& srcImg, const cv::Mat& grayImg);
 
-        /*
-        *	@Brief: Find all robots using the yolo algorithm interface
-        *	@Outputs: ALL the info of detection result
-        *	@Return: void
-        *	@Others: API for client
-        */
-
-        void brightness_adjust(cv::Mat &img, float alpha, int beta);
+//        void brightness_adjust(cv::Mat &img, float alpha, int beta);
         /*
         *	@Brief: core of detection algrithm, include all the main detection process
         *			// 检测算法的核心，包括所有主要的检测过程
@@ -326,7 +319,7 @@ namespace rm
         */
         RobotDescriptor detect(const cv::Rect &robot);
 
-        std::string armsClassification(const cv::Mat &roiImg);
+        int armsClassification(const cv::Mat &roiImg);
 
         /*
         *	@Brief: get the vertex of armor
