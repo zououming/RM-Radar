@@ -2,7 +2,7 @@
 #include "Serial/serialport.h"
 #include "ImageConsProd/ImageConsProd.h"
 using namespace rm;
-//#define TEXT_PIC
+#define TEXT_PIC
 #ifdef TEXT_PIC
 
 using namespace std;

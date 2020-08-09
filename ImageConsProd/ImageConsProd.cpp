@@ -121,8 +121,6 @@ void ImageConsProd::ImageConsumer() {
     std::vector<cv::Point2f> armorVertex;
     time(&lInit);
 
-    armor_detector->setEnemyColor(rm::BLUE);
-
 #ifdef USE_VIDEO
     Mat src;
     std::string video_name="/home/zououming/5.mp4";
@@ -158,7 +156,11 @@ void ImageConsProd::ImageConsumer() {
     writer.release();
 
 #else
-    radar->get_transformation_mat();
+    left_radar->set_enemy_color(rm::BLUE);
+    right_radar->set_enemy_color(rm::BLUE);
+    left_radar->get_transformation_mat();
+    right_radar->get_transformation_mat();
+
     while (true)
     {
         Mat src = cap->m_p->clone();
