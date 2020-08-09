@@ -3,15 +3,15 @@ using namespace std;
 
 
 Radar::Radar() {
-    this->YOLOv3 = new yoloApi();
+    this->YOLOv3 = new YoloApi();
     this->armor_detector = new rm::ArmorDetector;
     _srcMap = imread("../Radar/map.png");
 }
 
 
-Radar::Radar(rm::ArmorDetector &armorDetector) {
-    this->YOLOv3 = new yoloApi();
-    this->armor_detector = &armorDetector;
+Radar::Radar(rm::ArmorDetector *armorDetector, YoloApi *YOLOv3) {
+    this->YOLOv3 = YOLOv3;
+    this->armor_detector = armorDetector;
     _srcMap = imread("../Radar/map.png");
 }
 
@@ -31,7 +31,8 @@ void Radar::load_img(const cv::Mat &srcImg) {
 }
 
 
-void Radar::find_robot() {
+int Radar::find_robot() {
+    deal = false;
     YOLO_box.clear();
     YOLO_class.clear();
     robot_box.clear();
@@ -40,8 +41,8 @@ void Radar::find_robot() {
     YOLO_box = YOLOv3->get_boxes(_srcImg);
     YOLO_class = YOLOv3->get_class();
 
-    if (!YOLO_box.size())
-        return;
+    if (YOLO_box.empty())
+        return 0;
 #ifdef GPU
     gpuSrcImg.upload(_srcImg);
     cuda::cvtColor(gpuSrcImg, gpuGrayImg, COLOR_BGR2GRAY, 1);
@@ -60,7 +61,7 @@ void Radar::find_robot() {
         robot_box.emplace_back(robot);
         trackers->add(cv::TrackerKCF::create(), _srcImg, robot.position);
     }
-    draw_map();
+    return robot_box.size();
 }
 
 
@@ -93,31 +94,41 @@ void Radar::track() {
         }
     }
     deal = true;
+    map_transformation();
 }
 
 
-void Radar::draw_map(){
+void Radar::map_transformation(){
     cv::Mat map_point_mat;
-    _showMap = _srcMap.clone();
-    int circle_radius = int(_srcMap.size[1]/35);
-    for (const auto &robot : robot_box) {
+    for (auto &robot : robot_box) {
         if (_enemyColor == robot.team || _enemyColor == rm::GREEN) {
             double center[] = {double(robot.position.x + robot.position.width / 2),
                                double(robot.position.y + robot.position.height / 2), 1};
             cv::Mat box_point_mat(3, 1, CV_64FC1, center);
             map_point_mat = _transformation_Mat * box_point_mat;
 
-            Point2i map_point(int(map_point_mat.at<double>(0)), int(map_point_mat.at<double>(1)));
-            cv::circle(_showMap, map_point, circle_radius, robot.color, -1);
-
-            if (robot.arms != "robot") {
-                Point2i text_point(int(map_point.x - circle_radius / 2), int(map_point.y + circle_radius / 2));
-                cv::putText(_showMap, to_string(robot.numbering), text_point, FONT_HERSHEY_SIMPLEX, 0.8,
-                            Scalar(255, 255, 255), 2);
-            }
+            Point map_point(int(map_point_mat.at<double>(0)), int(map_point_mat.at<double>(1)));
+            robot.map_position = map_point;
         }
     }
-    imshow("map", _showMap);
+}
+
+
+void Radar::draw_map(){
+    _showMap = _srcMap.clone();
+    int circle_radius = int(_srcMap.size[1]/35);
+    for (auto &robot : robot_box) {
+        if (robot.map_position.x == -1)
+            continue;
+
+        cv::circle(_showMap, robot.map_position, circle_radius, robot.color, -1);
+
+        if (robot.arms != "robot") {
+            Point2i text_point(int(robot.map_position.x - circle_radius / 2), int(robot.map_position.y + circle_radius / 2));
+            cv::putText(_showMap, to_string(robot.numbering), text_point, FONT_HERSHEY_SIMPLEX, 0.8,
+                        Scalar(255, 255, 255), 2);
+        }
+    }
 }
 
 
@@ -190,4 +201,17 @@ Mat Radar::getLastImg() {
 
 Mat Radar::getLastMap() {
     return _showMap;
+}
+
+
+std::vector<RobotDescriptor> Radar::getRobotBox(){
+    return robot_box;
+}
+
+
+cv::Mat Radar::operator+(Radar &radar1){
+    for (auto &robot : radar1.getRobotBox())
+        this->robot_box.emplace_back(robot);
+    this->draw_map();
+    return this->getLastMap();
 }

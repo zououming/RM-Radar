@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../YOLO/yoloApi.h"
+#include "../YOLO/YoloApi.h"
 #include "../ArmorDetector/ArmorDetector.h"
 #include<opencv2/opencv.hpp>
 #include<opencv2/tracking.hpp>
@@ -15,10 +15,10 @@ public:
     Radar();
 
     /*
-    *	@Brief: Constructor, passing in the ArmorDetector class
-     *	构造函数，传入ArmorDetector类
+    *	@Brief: Constructor, passing in the ArmorDetector class and yolo class
+     *	构造函数，传入ArmorDetector,yolo类
     */
-    Radar(rm::ArmorDetector &armorDetector);
+    Radar(rm::ArmorDetector *armorDetector, YoloApi *YOLOv3);
 
     /*
     *	@Brief: Destructor, release YOLO class
@@ -44,9 +44,9 @@ public:
     *	@Brief: Find all robots using the YOLO algorithm interface
      *	使用YOLO算法检测所有目标
     *	@Outputs: ALL the info of detection result
-    *	@Return: void
+    *	@Return: Number of detected targets
     */
-    void find_robot();
+    int find_robot();
 
     /*
     *	@Brief: Track previously detected targets
@@ -55,6 +55,14 @@ public:
     *	@Return: void
     */
     void track();
+
+    /*
+    *	@Brief: Calculate the coordinates on the map
+     *	将坐标转换到小地图上
+    *	@Outputs: Complete map_points
+    *	@Return: void
+    */
+    void map_transformation();
 
     /*
     *	@Brief: Draw a map based on the target center point
@@ -92,8 +100,23 @@ public:
     */
     cv::Mat getLastMap();
 
+    /*
+    *	@Brief: Return to robot_box, used to unify the map
+     *	返回robot_box, 用于统一小地图
+    *	@Return: robot_box
+    */
+    std::vector<RobotDescriptor> getRobotBox();
+
+    /*
+    *	@Brief: Unify two radar maps and return the drawn map
+     *	统一两个雷达类的小地图,并返回绘制好的小地图
+    *	@Return: Drawn map
+    */
+    cv::Mat operator+(Radar &radar1);
+
     bool deal;  //是否处理好
     int _enemyColor; //敌人颜色
+
 private:
 
     /*
@@ -124,12 +147,13 @@ private:
     cuda::GpuMat gpuGrayImg;
 #endif
 
-    Ptr<yoloApi> YOLOv3;
+    Ptr<YoloApi> YOLOv3;
     Ptr<rm::ArmorDetector> armor_detector;
+    Ptr<cv::MultiTracker> trackers;
+
     std::vector<cv::Rect> YOLO_box;          //YOLO检测出的所有矩形
     std::vector<std::string> YOLO_class;     //YOLO检测出的矩形对应类名
     std::vector<RobotDescriptor> robot_box;  //储存检测到的所有机器人信息
-    Ptr<cv::MultiTracker> trackers;
 
 };
 

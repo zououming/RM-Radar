@@ -27,8 +27,8 @@ add_executable(RM_radar main.cpp
         ImageConsProd/ImageConsProd.h
         ImageConsProd/ImageConsProd.cpp
 
-        YOLO/yoloApi.h
-        YOLO/yoloApi.cpp
+        YOLO/YoloApi.h
+        YOLO/YoloApi.cpp
 
         Radar/Radar.h
         Radar/Radar.cpp

@@ -32,7 +32,7 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
 #include"General.h"
 #include<opencv2/ml.hpp>
 #include "../Settings/Settings.hpp"
-#include "../YOLO/yoloApi.h"
+#include "../YOLO/YoloApi.h"
 #include<string>
 
 

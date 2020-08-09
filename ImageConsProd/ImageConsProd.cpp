@@ -112,8 +112,7 @@ void ImageConsProd::ImageConsumer() {
     Vec2f targetAngle;
 
     /* Variables for armor detector modeule */
-    int armorFlag;
-    int armorType;
+    int leftNum, rightNum;
     time_t lInit;
     time_t lEnd;
     uint32_t ui32FrameCount = 0;
@@ -171,11 +170,18 @@ void ImageConsProd::ImageConsumer() {
         }
         if(!ui32FrameCount)
             time(&lInit);
-        this->armor_detector->loadImg(src);
-        if(ui32FrameCount % this->settings->track_frame == 0)
-            this->armor_detector->find_robot();
+        this->left_radar->load_img(src);
+        this->right_radar->load_img(src);
 
-        this->armor_detector->track();
+        if(ui32FrameCount % this->settings->track_frame == 0) {
+            leftNum = this->left_radar->find_robot();
+            rightNum = this->right_radar->find_robot();
+        }
+
+        printf("left: %d   right: %d\n", leftNum, rightNum);
+        this->left_radar->track();
+        this->right_radar->track();
+
         this->showImg(1);
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
 //        {
@@ -201,15 +207,20 @@ void ImageConsProd::showImg(int waitTime) {
         time(&lInit);
         uint32_t ui32FrameCount = 0;
         while (1) {
-            if (radar->deal) {
-                Mat img = radar->getLastImg();
-                Mat map = radar->getLastMap();
-                if (img.data != NULL)
-                    imshow("last img", img);
-                if (map.data != NULL)
-                    imshow("map", map);
+            if (left_radar->deal && right_radar->deal) {
+                Mat img1 = left_radar->getLastImg();
+                Mat img2 = right_radar->getLastImg();
+                Mat map = *left_radar + *right_radar;
+
+                if (img1.data != NULL)
+                    imshow("left img", img1);
+                if (img2.data != NULL)
+                    imshow("right img", img2);
+                imshow("map", map);
                 waitKey(1);
-                radar->deal = false;
+                left_radar->deal = false;
+                right_radar->deal = false;
+
                 ui32FrameCount++;
             }
             time(&lEnd);
@@ -221,9 +232,15 @@ void ImageConsProd::showImg(int waitTime) {
         }
     }
     else {
-        Mat img = radar->getLastImg();
-        if (img.data != NULL)
-            imshow("last img", img);
+        Mat img1 = left_radar->getLastImg();
+        Mat img2 = right_radar->getLastImg();
+        Mat map = *left_radar + *right_radar;
+
+        if (img1.data != NULL)
+            imshow("left img", img1);
+        if (img2.data != NULL)
+            imshow("right img", img2);
+        imshow("map", map);
         waitKey(waitTime);
     }
 }

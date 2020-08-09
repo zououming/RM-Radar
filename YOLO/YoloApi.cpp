@@ -1,7 +1,7 @@
-#include "yoloApi.h"
+#include "YoloApi.h"
 using namespace cv;
 
-yoloApi::yoloApi(){
+YoloApi::YoloApi(){
     cfg_file = "../YOLO/weightFile/my_yolov3.cfg";
     weight_file = "../YOLO/weights3/my_yolov3_22000.weights";
     class_file = "../YOLO/weightFile/myData.names";
@@ -20,11 +20,11 @@ yoloApi::yoloApi(){
     set_batch_network(net, 1);
 }
 
-yoloApi::~yoloApi(){
+YoloApi::~YoloApi(){
     delete [] net;
 }
 
-std::vector<cv::Rect> yoloApi::get_boxes(cv::Mat &img){
+std::vector<cv::Rect> YoloApi::get_boxes(cv::Mat &img){
     Mat rgb_img;
     cvtColor(img, rgb_img, cv::COLOR_BGR2RGB);
 
@@ -87,11 +87,11 @@ std::vector<cv::Rect> yoloApi::get_boxes(cv::Mat &img){
     return detect_boxes;
 }
 
-std::vector<std::string> yoloApi::get_class(){
+std::vector<std::string> YoloApi::get_class(){
     return detect_classes;
 }
 
-void yoloApi::img_convert(const cv::Mat &img, float *dst){
+void YoloApi::img_convert(const cv::Mat &img, float *dst){
     uchar* data = img.data;
 
     for(int k = 0; k < img.channels(); k++)
@@ -100,7 +100,7 @@ void yoloApi::img_convert(const cv::Mat &img, float *dst){
                 dst[k * img.cols * img.rows + i * img.cols + j] = data[(i * img.cols+j) * img.channels() + k]/255.;
 }
 
-void yoloApi::img_resize(float *src, float *dst, int srcWidth, int srcHeight, int dstWidth, int dstHeight){
+void YoloApi::img_resize(float *src, float *dst, int srcWidth, int srcHeight, int dstWidth, int dstHeight){
     int new_w = srcWidth;
     int new_h = srcHeight;
     if(((float)dstWidth / srcWidth) < ((float)dstHeight / srcHeight)) {
@@ -128,7 +128,7 @@ void yoloApi::img_resize(float *src, float *dst, int srcWidth, int srcHeight, in
     delete [] ImReInner;
 }
 
-void yoloApi::resize_inner(float *src, float *dst, int srcWidth, int srcHeight, int dstWidth, int dstHeight){
+void YoloApi::resize_inner(float *src, float *dst, int srcWidth, int srcHeight, int dstWidth, int dstHeight){
     size_t sizePa = dstWidth * srcHeight * 3 * sizeof(float);
     auto * part = new float[sizePa];
 

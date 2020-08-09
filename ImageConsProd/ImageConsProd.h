@@ -4,7 +4,7 @@
 
 #include "../CameraClass/CameraClass.h"
 #include "../Radar/Radar.h"
-#define USE_VIDEO
+//#define USE_VIDEO
 
 class ImageConsProd {
 public:
@@ -15,6 +15,14 @@ public:
         cap = _cap;
         otherParam = _otherParam;
         radar = _radar;
+    }
+    ImageConsProd(Settings * _settings, OtherParam *_otherParam, CameraClass *_cap, Radar *_leftRadar, Radar *_rightRadar)
+    {
+        settings = _settings;
+        cap = _cap;
+        otherParam = _otherParam;
+        left_radar = _leftRadar;
+        right_radar = _rightRadar;
     }
     void ImageProducer();
     void ImageConsumer();
@@ -27,6 +35,8 @@ public:
     CameraClass *cap;
     rm::ArmorDetector *armor_detector;
     Radar *radar;
+    Radar *left_radar;
+    Radar *right_radar;
 };
 
 

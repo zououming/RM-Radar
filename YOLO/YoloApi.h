@@ -14,12 +14,13 @@ struct RobotDescriptor {
     int numbering;
     std::string arms;
     cv::Rect2d position;
+    cv::Point map_position = cv::Point(-1, -1);
 };
 
-class yoloApi {
+class YoloApi {
 public:
-    yoloApi();
-    ~yoloApi();
+    YoloApi();
+    ~YoloApi();
     std::vector<cv::Rect> get_boxes(cv::Mat &img);
     std::vector<std::string> get_class();
 
