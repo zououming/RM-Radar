@@ -2,25 +2,19 @@
 
 
 void ImageConsProd::ImageConsProd_init() {
-    this->cap->settings = this->settings;   //cap是一个相机类，这个类里面也有很多要用到setting的，所以要让相机里面本身的setting变成当前的xml
-    this->armor_detector = this->cap->armor_detector;
-
-    //Initialize angle solver
-//    this->_solverPtr = this->cap->_solverPtr;
-//    AngleSolverParam angleParam;
-//    angleParam.readFile(9);
-//    this->_solverPtr->init(angleParam);
-//    this->_solverPtr->setResolution();
-//    this->_solverPtr->initset(this->settings);
-    //_solverPtr->setResolution(_videoCapturePtr->getResolution());
-
+    for (auto cap : cameraList) {
+        cap->settings = this->settings;   //cap是一个相机类，这个类里面也有很多要用到setting的，所以要让相机里面本身的setting变成当前的xml
+        this->armorDetector = cap->armor_detector;
+    }
 }
-void ImageConsProd::ImageProducer() {
+
+
+void ImageConsProd::ImageProducer(uint32_t id) {
     std::cout << "start image producer" << std::endl;
     GX_STATUS emStatus = GX_STATUS_SUCCESS;
 
     //Thread running flag setup
-    cap->g_bAcquisitionFlag = true;
+    cameraList[id]->g_bAcquisitionFlag = true;
     PGX_FRAME_BUFFER pFrameBuffer = NULL;
 
     Mat m_pss;
@@ -28,11 +22,11 @@ void ImageConsProd::ImageProducer() {
     time_t lEnd;
     uint32_t ui32FrameCount = 0;
     uint32_t ui32AcqFrameRate = 0;
-    emStatus = GXDQBuf(cap->g_hDevice, &pFrameBuffer, this->settings->camera_Enum);
-    emStatus = GXSetFloat(cap->g_hDevice, GX_FLOAT_EXPOSURE_TIME, 3000);
+    emStatus = GXDQBuf(cameraList[id]->g_hDevice, &pFrameBuffer, this->settings->camera_Enum);
+    emStatus = GXSetFloat(cameraList[id]->g_hDevice, GX_FLOAT_EXPOSURE_TIME, 3000);
     m_pss.create(pFrameBuffer->nHeight,pFrameBuffer->nWidth,CV_8UC3);
-    cap->m_p=&m_pss;
-    while(cap->g_bAcquisitionFlag)
+    cameraList[id]->m_p=&m_pss;
+    while(cameraList[id]->g_bAcquisitionFlag)
     {
         if(!ui32FrameCount)
         {
@@ -40,7 +34,7 @@ void ImageConsProd::ImageProducer() {
         }
 
         // Get a frame from Queue
-        emStatus = GXDQBuf(cap->g_hDevice, &pFrameBuffer, this->settings->camera_Enum);
+        emStatus = GXDQBuf(cameraList[id]->g_hDevice, &pFrameBuffer, this->settings->camera_Enum);
 
         if(emStatus != GX_STATUS_SUCCESS)
         {
@@ -48,21 +42,17 @@ void ImageConsProd::ImageProducer() {
                 continue;
             else
             {
-                cap->GetErrorString(emStatus);
+                cameraList[id]->GetErrorString(emStatus);
                 break;
             }
         }
 
-        cap->PixelFormatConvert(pFrameBuffer);
+        cameraList[id]->PixelFormatConvert(pFrameBuffer);
 
-        memcpy(m_pss.data,cap->g_pRGBImageBuf,pFrameBuffer->nHeight * pFrameBuffer->nWidth *3);
+        memcpy(m_pss.data, cameraList[id]->g_pRGBImageBuf,pFrameBuffer->nHeight * pFrameBuffer->nWidth *3);
 
-        //cvtColor(m_pss, *m_p, CV_BGR2RGB);
-        //imwrite("/home/bazinga/CLionProjects/RM_nbut2020/1.jpg",m_pss);
-        //resize(m_p, imgs, Size(640,480), (0, 0), (0, 0),INTER_LINEAR);
-        cap->img = true;
-        //imshow("xj",m_p);
-        //waitKey(30);
+        cameraList[id]->img = true;
+
         if(pFrameBuffer->nStatus != GX_FRAME_STATUS_SUCCESS)
             printf("<Abnormal Acquisition: Exception code: %d>\n", pFrameBuffer->nStatus);
         else
@@ -92,10 +82,10 @@ void ImageConsProd::ImageProducer() {
 //            }
         }
 
-        emStatus = GXQBuf(cap->g_hDevice, pFrameBuffer);
+        emStatus = GXQBuf(cameraList[id]->g_hDevice, pFrameBuffer);
         if(emStatus != GX_STATUS_SUCCESS)
         {
-            cap->GetErrorString(emStatus);
+            cameraList[id]->GetErrorString(emStatus);
             break;
         }
     }
@@ -103,16 +93,12 @@ void ImageConsProd::ImageProducer() {
 }
 
 
-void ImageConsProd::ImageConsumer() {
+void ImageConsProd::ImageConsumer(uint32_t id) {
     sleep(1);
     //Mat src;
 
-    /* Variables for angle solve module */
-    int angleFlag;
-    Vec2f targetAngle;
-
     /* Variables for armor detector modeule */
-    int leftNum, rightNum;
+    int num;
     time_t lInit;
     time_t lEnd;
     uint32_t ui32FrameCount = 0;
@@ -156,14 +142,12 @@ void ImageConsProd::ImageConsumer() {
     writer.release();
 
 #else
-    left_radar->set_enemy_color(rm::BLUE);
-    right_radar->set_enemy_color(rm::BLUE);
-    left_radar->get_transformation_mat();
-    right_radar->get_transformation_mat();
+    radarList[id]->set_enemy_color(rm::BLUE);
+    radarList[id]->get_transformation_mat();
 
     while (true)
     {
-        Mat src = cap->m_p->clone();
+        Mat src = cameraList[id]->m_p->clone();
         resize(src, src, Size(1920/2, 1080/2));
 
         if (src.data == NULL){
@@ -172,19 +156,15 @@ void ImageConsProd::ImageConsumer() {
         }
         if(!ui32FrameCount)
             time(&lInit);
-        this->left_radar->load_img(src);
-        this->right_radar->load_img(src);
+        this->radarList[id]->load_img(src);
 
-        if(ui32FrameCount % this->settings->track_frame == 0) {
-            leftNum = this->left_radar->find_robot();
-            rightNum = this->right_radar->find_robot();
-        }
+        if(ui32FrameCount % this->settings->track_frame == 0)
+            num = this->radarList[id]->find_robot();
 
-        printf("left: %d   right: %d\n", leftNum, rightNum);
-        this->left_radar->track();
-        this->right_radar->track();
+        printf("camera%d: %d \n", num);
+        this->radarList[id]->track();
 
-        this->showImg(1);
+//        this->ShowImg(1);
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
 //        {
 //            this->armor_detector->Kalman4f();
@@ -203,46 +183,54 @@ void ImageConsProd::ImageConsumer() {
 #endif
 }
 
-void ImageConsProd::showImg(int waitTime) {
+void ImageConsProd::ShowImg(int waitTime) {
+    Mat map;
+    uint32_t radarNum = radarList.size();
+
     if(waitTime < 0) {
         time_t lInit, lEnd;
         time(&lInit);
         uint32_t ui32FrameCount = 0;
         while (1) {
-            if (left_radar->deal && right_radar->deal) {
-                Mat img1 = left_radar->getLastImg();
-                Mat img2 = right_radar->getLastImg();
-                Mat map = *left_radar + *right_radar;
+            for (int i = 0; i < radarNum; i++) {
+                if (!radarList[i]->deal)
+                    continue;
+                Mat img = radarList[i]->getLastImg();
+                if (i > 0)
+                    map = *radarList[0] + *radarList[i];
+                else
+                    map = radarList[0]->getLastMap();
 
-                if (img1.data != NULL)
-                    imshow("left img", img1);
-                if (img2.data != NULL)
-                    imshow("right img", img2);
-                imshow("map", map);
-                waitKey(1);
-                left_radar->deal = false;
-                right_radar->deal = false;
-
+                if (img.data != NULL)
+                    imshow("camera"+std::to_string(i+1), img);
+                radarList[i]->deal = false;
                 ui32FrameCount++;
             }
+            if (map.data != NULL)
+                imshow("map", map);
+            waitKey(1);
             time(&lEnd);
             if(lEnd - lInit >= 1){
-                std::cout << "显示:" << ui32FrameCount << std::endl;
+                std::cout << "show: " << ui32FrameCount << std::endl;
                 ui32FrameCount = 0;
                 time(&lInit);
             }
         }
     }
     else {
-        Mat img1 = left_radar->getLastImg();
-        Mat img2 = right_radar->getLastImg();
-        Mat map = *left_radar + *right_radar;
+        for (int i = 0; i < radarNum; i++) {
+            Mat img = radarList[i]->getLastImg();
+            if (i > 0)
+                map = *radarList[0] + *radarList[i];
+            else
+                map = radarList[0]->getLastMap();
 
-        if (img1.data != NULL)
-            imshow("left img", img1);
-        if (img2.data != NULL)
-            imshow("right img", img2);
-        imshow("map", map);
+            if (img.data != NULL)
+                imshow("camera"+std::to_string(i+1), img);
+        }
+        if (map.data != NULL) {
+            imshow("map", map);
+        }
         waitKey(waitTime);
     }
 }

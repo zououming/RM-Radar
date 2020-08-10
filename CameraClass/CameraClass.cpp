@@ -4,7 +4,7 @@
 
 #include "CameraClass.h"
 
-GX_STATUS CameraClass::cameraInit() {
+GX_STATUS CameraClass::cameraInit(uint32_t id) {
     emStatus = GXInitLib();
     if(emStatus != GX_STATUS_SUCCESS)
     {
@@ -29,7 +29,7 @@ GX_STATUS CameraClass::cameraInit() {
     }
 
     //Open first device enumerated打开枚举的第一个设备
-    emStatus = GXOpenDeviceByIndex(1, &g_hDevice);
+    emStatus = GXOpenDeviceByIndex(id, &g_hDevice);
     if(emStatus != GX_STATUS_SUCCESS)
     {
         GetErrorString(emStatus);
@@ -156,19 +156,12 @@ CameraClass::CameraClass(Settings * settings1) {
 }
 
 CameraClass::CameraClass(Settings * settings1,SerialPort port) {
-    {
-        this->emStatus = GX_STATUS_SUCCESS;
-        //this->m_p=m_ps;
-        this->settings=settings1;
-        this->armor_detector=new ArmorDetector();
+    this->emStatus = GX_STATUS_SUCCESS;
+    //this->m_p=m_ps;
+    this->settings=settings1;
+    this->armor_detector=new ArmorDetector();
 
-        //Initialize angle solver
-        _port=port;
-        //_solverPtr->setResolution(_videoCapturePtr->getResolution());
-
-
-
-    }
+    _port=port;
 }
 
 GX_STATUS CameraClass::cameraMode() {
@@ -237,11 +230,6 @@ GX_STATUS CameraClass::cameraMode() {
 //    emStatus =GXSetInt(g_hDevice,GX_INT_AWBROI_HEIGHT, 100);
 //    emStatus =GXSetInt(g_hDevice,GX_INT_AWBROI_OFFSETX, 0);
 //    emStatus =GXSetInt(g_hDevice,GX_INT_AWBROI_OFFSETY, 0);
-
-
-
-
-
 
     //设 置 连 续 自 动 增 益
     emStatus = GXSetEnum(g_hDevice, GX_ENUM_GAIN_AUTO, GX_GAIN_AUTO_CONTINUOUS);
@@ -337,7 +325,6 @@ void CameraClass::ProcGetImage() {
         }
 
         PixelFormatConvert(pFrameBuffer);
-
 
         memcpy(m_pss.data,g_pRGBImageBuf,pFrameBuffer->nHeight * pFrameBuffer->nWidth *3);
         //cvtColor(m_pss, *m_p, CV_BGR2RGB);

@@ -105,7 +105,7 @@ void Radar::map_transformation(){
             double center[] = {double(robot.position.x + robot.position.width / 2),
                                double(robot.position.y + robot.position.height / 2), 1};
             cv::Mat box_point_mat(3, 1, CV_64FC1, center);
-            map_point_mat = _transformation_Mat * box_point_mat;
+            map_point_mat = _transformationMat * box_point_mat;
 
             Point map_point(int(map_point_mat.at<double>(0)), int(map_point_mat.at<double>(1)));
             robot.map_position = map_point;
@@ -116,7 +116,7 @@ void Radar::map_transformation(){
 
 void Radar::draw_map(){
     _showMap = _srcMap.clone();
-    int circle_radius = int(_srcMap.size[1]/35);
+    int circle_radius = int(_srcMap.size[1]/40);
     for (auto &robot : robot_box) {
         if (robot.map_position.x == -1)
             continue;
@@ -147,6 +147,7 @@ void Radar::get_transformation_mat(){
     Mat showMap = _srcMap.clone();
     std::vector<Point2f> srcPoints, mapPoints;
     int key;
+    printf("Click three dots on src.\n");
     while(1) {
         showImg = _srcImg.clone();
         cv::setMouseCallback("src", window_get_points, (void*)&srcPoints);
@@ -166,6 +167,7 @@ void Radar::get_transformation_mat(){
             break;
     }
 
+    printf("Click the positions of the just three points in turn on the map.\n");
     while(1) {
         showMap = _srcMap.clone();
         cv::setMouseCallback("map", window_get_points, (void*)&mapPoints);
@@ -187,10 +189,10 @@ void Radar::get_transformation_mat(){
     cv::destroyWindow("src");
     cv::destroyWindow("map");
 
-    _transformation_Mat = getAffineTransform(srcPoints, mapPoints);
+    _transformationMat = getAffineTransform(srcPoints, mapPoints);
     double add_array[] = {0, 0, 1};
     Mat add_vec = Mat(1, 3, CV_64FC1, add_array);
-    cv::vconcat(_transformation_Mat, add_vec, _transformation_Mat);
+    cv::vconcat(_transformationMat, add_vec, _transformationMat);
 }
 
 

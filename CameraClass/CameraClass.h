@@ -67,8 +67,8 @@ public:
     int64_t g_i64ColorFilter = GX_COLOR_FILTER_BAYER_BG;    ///< Color filter of device设备滤色器
     bool g_bAcquisitionFlag = false;                    ///< Thread running flag线程运行标志
     //bool g_bSavePPMImage = false;                       ///< Save raw image flag保存原始图像标志
-//    pthread_t g_nAcquisitonThreadID = 0;                ///< Thread ID of Acquisition thread
-//    pthread_t g_nAcquisitonThreadID1 = 1;
+    //pthread_t g_nAcquisitonThreadID = 0;                ///< Thread ID of Acquisition thread
+    //pthread_t g_nAcquisitonThreadID1 = 1;
     unsigned char* g_pRGBImageBuf = nullptr;               ///< Memory for RAW8toRGB24
     unsigned char* g_pRaw8Image = nullptr;                 ///< Memory for RAW16toRAW8
 
@@ -76,7 +76,7 @@ public:
 
     bool img=false;
 
-//opencv
+    //opencv
     Mat  *m_p;
     //Mat imgs;
 
@@ -93,24 +93,23 @@ public:
 
 public:
     CameraClass(Settings *settings1);
-    explicit CameraClass(Settings *settings1,SerialPort port);
-    GX_STATUS cameraInit();
+    explicit CameraClass(Settings *settings1, SerialPort port);
+    GX_STATUS cameraInit(uint32_t id);
     GX_STATUS cameraMode();
     ~CameraClass();
     void detectingThread();
 
-
-//Allocate the memory for pixel format transform
+    //Allocate the memory for pixel format transform
     void PreForAcquisition();
 
-//Release the memory allocated
+    //Release the memory allocated
     void UnPreForAcquisition();
 
-//Convert frame date to suitable pixel format将帧转换为合适的像素格式
+    //Convert frame date to suitable pixel format将帧转换为合适的像素格式
     int PixelFormatConvert(PGX_FRAME_BUFFER  pFrameBuffer);
 
 
-//Acquisition thread function采集线程功能
+    //Acquisition thread function采集线程功能
     void ProcGetImage();
 
 

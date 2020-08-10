@@ -115,7 +115,7 @@ public:
     cv::Mat operator+(Radar &radar1);
 
     bool deal;  //是否处理好
-    int _enemyColor; //敌人颜色
+    int _enemyColor; //敌人颜色 如果是绿色则全部显示
 
 private:
 
@@ -136,11 +136,11 @@ private:
     static void window_get_points(int event, int x, int y, int flags, void* param);
 
     cv::Mat _srcImg;    //原图像
-    cv::Mat _grayImg;   //ROI的灰度图
+    cv::Mat _grayImg;   //原图像的灰度图
     cv::Mat _showImg;   //处理好的图像
     cv::Mat _srcMap;    //原地图
     cv::Mat _showMap;   //处理好的地图
-    cv::Mat _transformation_Mat;  //变换矩阵
+    cv::Mat _transformationMat;  //变换矩阵
 
 #ifdef GPU
     cuda::GpuMat gpuSrcImg;

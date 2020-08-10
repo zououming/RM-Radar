@@ -9,34 +9,34 @@
 class ImageConsProd {
 public:
     ImageConsProd();
-    ImageConsProd(Settings * _settings, OtherParam *_otherParam, CameraClass *_cap, Radar *_radar)
+
+    ImageConsProd(Settings * _settings, OtherParam *_otherParam, CameraClass *_camera, Radar *_radar)
     {
         settings = _settings;
-        cap = _cap;
         otherParam = _otherParam;
-        radar = _radar;
+        cameraList.emplace_back(_camera);
+        radarList.emplace_back(_radar);
     }
-    ImageConsProd(Settings * _settings, OtherParam *_otherParam, CameraClass *_cap, Radar *_leftRadar, Radar *_rightRadar)
+
+    ImageConsProd(Settings * _settings, OtherParam *_otherParam, std::vector<CameraClass*> _cameraList, std::vector<Radar*> _radarList)
     {
         settings = _settings;
-        cap = _cap;
         otherParam = _otherParam;
-        left_radar = _leftRadar;
-        right_radar = _rightRadar;
+        cameraList = _cameraList;
+        radarList = _radarList;
     }
-    void ImageProducer();
-    void ImageConsumer();
-    void showImg(int waitTime);
+
+    void ImageProducer(uint32_t id);
+    void ImageConsumer(uint32_t id);
+    void ShowImg(int waitTime);
     void ImageConsProd_init();
 
 public:
     OtherParam *otherParam;
     Settings *settings;
-    CameraClass *cap;
-    rm::ArmorDetector *armor_detector;
-    Radar *radar;
-    Radar *left_radar;
-    Radar *right_radar;
+    std::vector<CameraClass*> cameraList;
+    rm::ArmorDetector *armorDetector;
+    std::vector<Radar*> radarList;
 };
 
 
