@@ -27,8 +27,8 @@ add_executable(RM_radar main.cpp
         ImageConsProd/ImageConsProd.h
         ImageConsProd/ImageConsProd.cpp
 
-        YOLO/YoloApi.h
-        YOLO/YoloApi.cpp
+        YOLO/YOLOClass.h
+        YOLO/YOLOClass.cpp
 
         Radar/Radar.h
         Radar/Radar.cpp
@@ -37,13 +37,14 @@ add_executable(RM_radar main.cpp
 target_link_libraries (RM_radar
         gxiapi
         pthread
-        /home/zououming/darknet/libdarknet.so
+        /home/zououming/yolov4/darknet/libdarknet.so
         )
+
+INCLUDE_DIRECTORIES(/home/zououming/yolov4/darknet/include)
 
 find_package(OpenCV REQUIRED)
 find_package(CUDA REQUIRED)
 set(CUDA_NVCC_FLAGS -G;-g;-std=c++11)
-INCLUDE_DIRECTORIES(/home/zououming/darknet/include)
 include_directories(${CUDA_INCLUDE_DIRS})
 
 target_link_libraries(RM_radar

@@ -32,7 +32,7 @@ Authors:	Rick_Hang, <213162574@seu.edu.cn>
 #include"General.h"
 #include<opencv2/ml.hpp>
 #include "../Settings/Settings.hpp"
-#include "../YOLO/YoloApi.h"
+#include "../YOLO/YOLOClass.h"
 #include<string>
 
 
@@ -98,7 +98,7 @@ namespace rm
         float sight_offset_normalized_base;// 视线偏移归一化？
         float area_normalized_base;		// 面积归一化
         int enemy_color;				// 敌人颜色
-        int max_track_num = 3000;		// 最大轨道数量
+        int max_trackRobot_num = 3000;		// 最大轨道数量
 
         /*
         *	@Brief: 为各项参数赋默认值
@@ -235,7 +235,7 @@ namespace rm
         *	// 输入: 感兴趣区域的灰度图
         *	@Outputs: store the front img to ArmorDescriptor's public
         */
-        Mat getFrontImg(const cv::Mat& grayImg);
+        cv::Mat getFrontImg(const cv::Mat& grayImg);
 
         /*
         *	@Return: if the centeral pattern belong to an armor
@@ -272,9 +272,9 @@ namespace rm
         enum ArmorFlag
         {
             ARMOR_NO = 0,		// not found			// 没有找到
-            ARMOR_LOST = 1,		// lose tracking		// 跟丢了
+            ARMOR_LOST = 1,		// lose trackRoboting		// 跟丢了
             ARMOR_GLOBAL = 2,	// armor found globally	// 全局找
-            ARMOR_LOCAL = 3		// armor found locally(in tracking mode)
+            ARMOR_LOCAL = 3		// armor found locally(in trackRoboting mode)
         };
 
     public:
@@ -301,7 +301,7 @@ namespace rm
         }
 
         /*
-        *	@Brief: load image and set tracking roi
+        *	@Brief: load image and set trackRoboting roi
         *			// 读取图片，设定追踪区域
         *	@Input: frame
         *	@Others: API for client
@@ -338,7 +338,7 @@ namespace rm
         *	@Return: 0 for small armor, 1 for big armor
         *	@Others: API for client
         */
-        Mat getLastImg();
+        cv::Mat getLastImg();
         int getArmorType() const;
         void Pre_GetCenter();
         void Pre_GetViex();
@@ -360,21 +360,21 @@ namespace rm
         cv::Mat _grayImg; //gray img of roi	// ROI的灰度图
 
 #ifdef GPU
-        cuda::GpuMat gpuSrcImg;
-        cuda::GpuMat gpuGrayImg;
+        cv::cuda::GpuMat gpuSrcImg;
+        cv::cuda::GpuMat gpuGrayImg;
 #endif
 
-        int _trackCnt = 0;						// 跟踪数：0 ？
+        int _trackRobotCnt = 0;						// 跟踪数：0 ？
 
         std::vector<ArmorDescriptor> _armors;	// 装甲板
-        Ptr<ml::SVM> svm;
+        cv::Ptr<cv::ml::SVM> svm;
 
         std::string armsList[8] = {"robot", "Hero", "Engineer", "Infantry1", "Infantry2", "Infantry3", "Drone", "Sentinel"};
 
         ArmorDescriptor _targetArmor; //relative coordinates
 
         int _flag;
-        bool _isTracking;
+        bool _istrackRoboting;
 
         int stateNum = 4;
         int measureNum = 2;

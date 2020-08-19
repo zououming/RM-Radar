@@ -10,26 +10,25 @@ int main(int argc, char * argv[]) {
     char * config_file_name = "../Settings/param_config.xml";
     Settings setting(config_file_name);
     OtherParam other_param;
-    YoloApi YOLOv3;
+    YOLOClass YOLOv4("../YOLO/weightFile/my_yolov4.cfg", "../YOLO/weightFile/my_yolov4_last.weights", "../YOLO/weightFile/myData.names", 0.5);
     ArmorDetector armorDetector;
     CameraClass camera(&setting);
-    Radar radar(&armorDetector, &YOLOv3);
-
+    Radar radar(&armorDetector, &YOLOv4);
     ImageConsProd image_cons_prod(&setting, &other_param, &camera, &radar);
     image_cons_prod.ImageConsProd_init();
 
-    image_cons_prod.radarList[0]->set_enemy_color(rm::GREEN);
+    image_cons_prod.radarList[0]->setEnemyColor(rm::GREEN);
 
-    Mat img = imread("/home/zououming/Pictures/1233.png");
-    image_cons_prod.radarList[0]->load_img(img);
-    image_cons_prod.radarList[0]->get_transformation_mat();
+    cv::Mat img = cv::imread("/home/zououming/Pictures/1233.png");
+    image_cons_prod.radarList[0]->loadImg(img);
+    image_cons_prod.radarList[0]->getTransformationMat();
 
-    image_cons_prod.radarList[0]->find_robot();
-    image_cons_prod.radarList[0]->track();
-    image_cons_prod.radarList[0]->draw_map();
+    image_cons_prod.radarList[0]->findRobot();
+    image_cons_prod.radarList[0]->trackRobot();
+    image_cons_prod.radarList[0]->drawMap();
 
-    imwrite("./img.jpg", image_cons_prod.radarList[0]->getLastImg());
-    imwrite("./map.jpg", image_cons_prod.radarList[0]->getLastMap());
+    cv::imshow("./img.jpg", image_cons_prod.radarList[0]->getLastImg());
+    cv::imshow("./map.jpg", image_cons_prod.radarList[0]->getLastMap());
 
     image_cons_prod.ShowImg(0);
 }

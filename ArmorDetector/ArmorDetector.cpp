@@ -242,7 +242,7 @@ namespace rm
     {
         _flag = ARMOR_NO;
         _roi = Rect(cv::Point(0, 0), _srcImg.size());
-        _isTracking = false;
+        _istrackRoboting = false;
 
         svm = StatModel::load<SVM>("../ArmorDetector/svm_arms19.xml");
 
@@ -270,7 +270,7 @@ namespace rm
         _param = armorParam;
         _flag = ARMOR_NO;
         _roi = Rect(cv::Point(0, 0), _srcImg.size());
-        _isTracking = false;
+        _istrackRoboting = false;
 
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
         _debugWindowName = "debug info";
@@ -292,7 +292,7 @@ namespace rm
 
 //        Rect imgBound = Rect(cv::Point(0, 0), _srcImg.size());	// 矩形框
 //
-//        if (_flag == ARMOR_LOCAL && _trackCnt != _param.max_track_num)
+//        if (_flag == ARMOR_LOCAL && _trackRobotCnt != _param.max_trackRobot_num)
 //        {
 //            cv::Rect bRect = boundingRect(_targetArmor.vertex) + _roi.tl();
 //            bRect = cvex::scaleRect(bRect, Vec2f(3, 2));	//以中心为锚点放大2倍
@@ -303,7 +303,7 @@ namespace rm
 //        {
 //            _roi = imgBound;
 //            _roiImg = _srcImg.clone();
-//            _trackCnt = 0;
+//            _trackRobotCnt = 0;
 //        }
 
 #ifdef DEBUG_DETECTION
@@ -355,24 +355,24 @@ namespace rm
                 string adjust_window = "adjust threshold";
                 namedWindow(adjust_window);
 
-                createTrackbar("alpha * 10", adjust_window, 0, 30);
-                createTrackbar("beta", adjust_window, &beta, 100);
-                createTrackbar("threshold", adjust_window, &_param.brightness_threshold, 255);
+                createtrackRobotbar("alpha * 10", adjust_window, 0, 30);
+                createtrackRobotbar("beta", adjust_window, &beta, 100);
+                createtrackRobotbar("threshold", adjust_window, &_param.brightness_threshold, 255);
 
-                createTrackbar("dilate size", adjust_window, &kernel_size[0], 20);
-                createTrackbar("erode size", adjust_window, &kernel_size[1], 20);
+                createtrackRobotbar("dilate size", adjust_window, &kernel_size[0], 20);
+                createtrackRobotbar("erode size", adjust_window, &kernel_size[1], 20);
 
                 while (1) {
                     this_robot_src = _srcImg(robot_rect);
                     resize(this_robot_src, this_robot_src, enlarge_size);
 
-                    alpha = double(getTrackbarPos("alpha * 10", adjust_window)) / 10;
-                    beta = getTrackbarPos("beta", adjust_window);
+                    alpha = double(gettrackRobotbarPos("alpha * 10", adjust_window)) / 10;
+                    beta = gettrackRobotbarPos("beta", adjust_window);
                     brightness_adjust(this_robot_src, alpha, beta);
 
-                    _param.brightness_threshold = getTrackbarPos("threshold", adjust_window);
-                    kernel_size[0] = getTrackbarPos("dilate size", adjust_window);
-                    kernel_size[1] = getTrackbarPos("erode size", adjust_window);
+                    _param.brightness_threshold = gettrackRobotbarPos("threshold", adjust_window);
+                    kernel_size[0] = gettrackRobotbarPos("dilate size", adjust_window);
+                    kernel_size[1] = gettrackRobotbarPos("erode size", adjust_window);
 
                     cv::imshow("src", this_robot_src);
                     cvtColor(this_robot_src, this_robot_gray, COLOR_BGR2GRAY, 1);
@@ -603,7 +603,7 @@ namespace rm
             this_robot.arms = armsList[this_robot.numbering];
         }
 
-        _trackCnt++;
+        _trackRobotCnt++;
 
 #if defined(DEBUG_DETECTION) || defined(SHOW_RESULT)
         Pre_GetViex();

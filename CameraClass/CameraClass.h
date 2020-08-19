@@ -20,7 +20,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-using namespace cv;
+//using namespace cv;
 using namespace rm;
 
 #define ACQ_BUFFER_NUM          5               ///< Acquisition Buffer Qty./采集缓冲器数量
@@ -77,7 +77,7 @@ public:
     bool img=false;
 
     //opencv
-    Mat  *m_p;
+    cv::Mat  *m_p;
     //Mat imgs;
 
     //Camera

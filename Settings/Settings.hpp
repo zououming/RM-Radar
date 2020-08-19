@@ -20,7 +20,7 @@ IN THE SOFTWARE.
 #include <string>
 //#include "../ArmorDetector/ArmorDetector.h"
 
-using namespace cv;
+//using namespace cv;
 
 #define ARMOR_MODE 0
 #define RUNE_MODE 1
@@ -51,12 +51,12 @@ public:
     Settings(const std::string & filename){
         scale_z_480 = 1.0;
         scale_z = 1.0;
-        FileStorage setting_fs(filename, FileStorage::READ);
+        cv::FileStorage setting_fs(filename, cv::FileStorage::READ);
         read(setting_fs);
         setting_fs.release();
     }
 
-    void read(const FileStorage& fs)  {
+    void read(const cv::FileStorage& fs)  {
         // for debug image
         fs["show_image"] >> show_image;
         fs["save_result"] >> save_result;
@@ -196,7 +196,7 @@ public:
             scale_z_480 = 1.0;
     }
 
-    void write(FileStorage& fs) const{
+    void write(cv::FileStorage& fs) const{
         // for debug image
         cvWriteComment(*fs, "\nFor Debug Image", 0);
         fs << "show_image" << show_image;
@@ -257,7 +257,7 @@ public:
 public:
     int show_image;
     int save_result;
-    int track_frame = 5;
+    int trackRobot_frame = 5;
     RuneParam rune;
     //rm::ArmorParam armor;
     int mode;

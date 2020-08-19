@@ -1,51 +1,69 @@
 #include "Radar.h"
 using namespace std;
 
-
-Radar::Radar() {
-    this->YOLOv3 = new YoloApi();
+Radar::Radar()
+{
+    this->YOLO = new YOLOClass();
     this->armor_detector = new rm::ArmorDetector;
-    _srcMap = imread("../Radar/map.png");
+    _srcMap = cv::imread("../Radar/map.png");
 }
 
-
-Radar::Radar(rm::ArmorDetector *armorDetector, YoloApi *YOLOv3) {
-    this->YOLOv3 = YOLOv3;
+Radar::Radar(rm::ArmorDetector *armorDetector, Detector *yoloDetector)
+{
     this->armor_detector = armorDetector;
-    _srcMap = imread("../Radar/map.png");
+    this->YOLO_detector = yoloDetector;
+    _srcMap = cv::imread("../Radar/map.png");
+}
+
+Radar::Radar(rm::ArmorDetector *armorDetector, YOLOClass *YOLOv3)
+{
+    this->YOLO = YOLOv3;
+    this->armor_detector = armorDetector;
+    _srcMap = cv::imread("../Radar/map.png");
 }
 
 
-Radar::~Radar() {
-    delete [] this->YOLOv3;
+Radar::~Radar()
+{
+    delete [] this->YOLO;
 }
 
 
-void Radar::set_enemy_color(int enemyColor){
+void Radar::setEnemyColor(int enemyColor)
+{
     _enemyColor = enemyColor;
 }
 
 
-void Radar::load_img(const cv::Mat &srcImg) {
+void Radar::loadImg(const cv::Mat &srcImg)
+{
     _srcImg = srcImg;
 }
 
+//image_t Radar::to_image_t(cv::Mat &srcImg)
+//{
+//
+//    image_t (srcImg.size[0], srcImg.size[1], 3, float_to_image()srcImg.data);
+//}
 
-int Radar::find_robot() {
+
+int Radar::findRobot()
+{
     deal = false;
     YOLO_box.clear();
     YOLO_class.clear();
     robot_box.clear();
-    trackers = MultiTracker::create();
+    YOLO_bbox.clear();
+    trackRoboters = cv::MultiTracker::create();
 
-    YOLO_box = YOLOv3->get_boxes(_srcImg);
-    YOLO_class = YOLOv3->get_class();
-
+    YOLO_box = YOLO->get_boxes(_srcImg);
+//    YOLO_bbox = YOLO_detector->detect(YOLO->mat_to_image_t(_srcImg));
+    YOLO_class = YOLO->get_class();
     if (YOLO_box.empty())
         return 0;
 #ifdef GPU
     gpuSrcImg.upload(_srcImg);
-    cuda::cvtColor(gpuSrcImg, gpuGrayImg, COLOR_BGR2GRAY, 1);
+    cv::cuda::cvtColor(gpuSrcImg, gpuGrayImg, cv::COLOR_BGR2GRAY, 1);
     gpuGrayImg.download(_grayImg);
 #else
     cvtColor(_srcImg, _grayImg, COLOR_BGR2GRAY, 1);
@@ -53,19 +71,21 @@ int Radar::find_robot() {
 
     armor_detector->loadImg(_srcImg, _grayImg);
 
-    for (int i = 0; i < YOLO_box.size(); i++) {
-        box_fix(YOLO_box[i]);
+    for (int i = 0; i < YOLO_box.size(); ++i)
+    {
+        boxFix(YOLO_box[i]);
         RobotDescriptor robot = armor_detector->detect(YOLO_box[i]);
         robot.team = YOLO_class[i] == "blue robot" ? rm::BLUE : rm::RED;
-        robot.color = YOLO_class[i] == "blue robot" ? Scalar(255, 0, 0): Scalar(0, 0, 255);
+        robot.color = YOLO_class[i] == "blue robot" ? cv::Scalar(255, 0, 0): cv::Scalar(0, 0, 255);
         robot_box.emplace_back(robot);
-        trackers->add(cv::TrackerKCF::create(), _srcImg, robot.position);
+        trackRoboters->add(cv::TrackerKCF::create(), _srcImg, robot.position);
     }
     return robot_box.size();
 }
 
 
-void Radar::box_fix(cv::Rect &rect) {
+void Radar::boxFix(cv::Rect &rect)
+{
     if (rect.x + rect.width > _srcImg.size[1] - 1)
         rect.x = _srcImg.size[1] - 1 - rect.width;
     if (rect.y + rect.height > _srcImg.size[0] - 1)
@@ -73,48 +93,51 @@ void Radar::box_fix(cv::Rect &rect) {
 }
 
 
-void Radar::track() {
-    if (trackers->empty())
+void Radar::trackRobot()
+{
+    if (trackRoboters->empty())
         return;
-    trackers->update(_srcImg);
+    trackRoboters->update(_srcImg);
     _showImg = _srcImg.clone();
-    vector<Rect_<double>> new_position = trackers->getObjects();
+    vector<cv::Rect_<double>> new_position = trackRoboters->getObjects();
 
     string team, text;
-    for (int i = 0; i < robot_box.size(); i++) {
-        if (_enemyColor == robot_box[i].team || _enemyColor == rm::GREEN) {
+    for (int i = 0; i < robot_box.size(); ++i){
+        if (_enemyColor == robot_box[i].team || _enemyColor == rm::GREEN){
             robot_box[i].position = new_position[i];
             team = robot_box[i].team == rm::RED ? "red" : "blue";
 
             text = team + " " + robot_box[i].arms;
             cv::rectangle(_showImg, robot_box[i].position, robot_box[i].color, 2, 1);
 
-            Point text_point(int(robot_box[i].position.x), int(robot_box[i].position.y - 2));
-            cv::putText(_showImg, text, text_point, FONT_HERSHEY_SIMPLEX, 0.8, robot_box[i].color, 2);
+            cv::Point text_point(int(robot_box[i].position.x), int(robot_box[i].position.y - 2));
+            cv::putText(_showImg, text, text_point, cv::FONT_HERSHEY_SIMPLEX, 0.8, robot_box[i].color, 2);
         }
     }
     deal = true;
-    map_transformation();
+    mapTransformation();
 }
 
 
-void Radar::map_transformation(){
+void Radar::mapTransformation()
+{
     cv::Mat map_point_mat;
-    for (auto &robot : robot_box) {
-        if (_enemyColor == robot.team || _enemyColor == rm::GREEN) {
+    for (auto &robot : robot_box){
+        if (_enemyColor == robot.team || _enemyColor == rm::GREEN){
             double center[] = {double(robot.position.x + robot.position.width / 2),
                                double(robot.position.y + robot.position.height / 2), 1};
             cv::Mat box_point_mat(3, 1, CV_64FC1, center);
             map_point_mat = _transformationMat * box_point_mat;
 
-            Point map_point(int(map_point_mat.at<double>(0)), int(map_point_mat.at<double>(1)));
+            cv::Point map_point(int(map_point_mat.at<double>(0)), int(map_point_mat.at<double>(1)));
             robot.map_position = map_point;
         }
     }
 }
 
 
-void Radar::draw_map(){
+void Radar::drawMap()
+{
     _showMap = _srcMap.clone();
     int circle_radius = int(_srcMap.size[1]/40);
     for (auto &robot : robot_box) {
@@ -123,38 +146,40 @@ void Radar::draw_map(){
 
         cv::circle(_showMap, robot.map_position, circle_radius, robot.color, -1);
 
-        if (robot.arms != "robot") {
-            Point2i text_point(int(robot.map_position.x - circle_radius / 2), int(robot.map_position.y + circle_radius / 2));
-            cv::putText(_showMap, to_string(robot.numbering), text_point, FONT_HERSHEY_SIMPLEX, 0.8,
-                        Scalar(255, 255, 255), 2);
+        if (robot.arms != "robot"){
+            cv::Point2i text_point(int(robot.map_position.x - circle_radius / 2), int(robot.map_position.y + circle_radius / 2));
+            cv::putText(_showMap, to_string(robot.numbering), text_point, cv::FONT_HERSHEY_SIMPLEX, 0.8,
+                        cv::Scalar(255, 255, 255), 2);
         }
     }
 }
 
 
-void Radar::window_get_points(int event, int x, int y, int flags, void* param){
-    auto* Points = (std::vector<Point2f>*) param;
+void Radar::windowGetPoints(int event, int x, int y, int flags, void* param)
+{
+    auto* Points = (std::vector<cv::Point2f>*) param;
 
-    if(event == CV_EVENT_LBUTTONDOWN) {
+    if(event == CV_EVENT_LBUTTONDOWN){
         printf("(%d, %d)\n", x, y);
         Points->emplace_back(x, y);
     }
 }
 
 
-void Radar::get_transformation_mat(){
-    Mat showImg = _srcImg.clone();
-    Mat showMap = _srcMap.clone();
-    std::vector<Point2f> srcPoints, mapPoints;
+void Radar::getTransformationMat()
+{
+    cv::Mat showImg = _srcImg.clone();
+    cv::Mat showMap = _srcMap.clone();
+    std::vector<cv::Point2f> srcPoints, mapPoints;
     int key;
     printf("Click three dots on src.\n");
-    while(1) {
+    while(1){
         showImg = _srcImg.clone();
-        cv::setMouseCallback("src", window_get_points, (void*)&srcPoints);
+        cv::setMouseCallback("src", windowGetPoints, (void*)&srcPoints);
         if (!srcPoints.empty()){
-            for (int i = 0; i < srcPoints.size(); i++) {
-                cv::circle(showImg, srcPoints[i], 3, Scalar(0, 255, 0), -1);
-                cv::putText(showImg, to_string(i+1), srcPoints[i], FONT_HERSHEY_SIMPLEX, 0.8, Scalar(255, 255, 255), 2);
+            for (int i = 0; i < srcPoints.size(); i++){
+                cv::circle(showImg, srcPoints[i], 3, cv::Scalar(0, 255, 0), -1);
+                cv::putText(showImg, to_string(i+1), srcPoints[i], cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
             }
         }
         cv::imshow("src", showImg);
@@ -168,13 +193,13 @@ void Radar::get_transformation_mat(){
     }
 
     printf("Click the positions of the just three points in turn on the map.\n");
-    while(1) {
+    while(1){
         showMap = _srcMap.clone();
-        cv::setMouseCallback("map", window_get_points, (void*)&mapPoints);
+        cv::setMouseCallback("map", windowGetPoints, (void*)&mapPoints);
         if (!mapPoints.empty()){
-            for (int i = 0; i < mapPoints.size(); i++) {
-                cv::circle(showMap, mapPoints[i], 3, Scalar(0, 255, 0), -1);
-                cv::putText(showMap, to_string(i+1), mapPoints[i], FONT_HERSHEY_SIMPLEX, 0.8, Scalar(255, 255, 255), 2);
+            for (int i = 0; i < mapPoints.size(); ++i){
+                cv::circle(showMap, mapPoints[i], 3, cv::Scalar(0, 255, 0), -1);
+                cv::putText(showMap, to_string(i+1), mapPoints[i], cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
             }
         }
         cv::imshow("map", showMap);
@@ -191,29 +216,33 @@ void Radar::get_transformation_mat(){
 
     _transformationMat = getAffineTransform(srcPoints, mapPoints);
     double add_array[] = {0, 0, 1};
-    Mat add_vec = Mat(1, 3, CV_64FC1, add_array);
+    cv::Mat add_vec = cv::Mat(1, 3, CV_64FC1, add_array);
     cv::vconcat(_transformationMat, add_vec, _transformationMat);
 }
 
 
-Mat Radar::getLastImg() {
+cv::Mat Radar::getLastImg()
+{
     return _showImg;
 }
 
 
-Mat Radar::getLastMap() {
+cv::Mat Radar::getLastMap()
+{
     return _showMap;
 }
 
 
-std::vector<RobotDescriptor> Radar::getRobotBox(){
+std::vector<RobotDescriptor> Radar::getRobotBox()
+{
     return robot_box;
 }
 
 
-cv::Mat Radar::operator+(Radar &radar1){
+cv::Mat Radar::operator+(Radar &radar1)
+{
     for (auto &robot : radar1.getRobotBox())
         this->robot_box.emplace_back(robot);
-    this->draw_map();
+    this->drawMap();
     return this->getLastMap();
 }

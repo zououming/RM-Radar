@@ -290,7 +290,7 @@ void CameraClass::ProcGetImage() {
     PGX_FRAME_BUFFER pFrameBuffer = NULL;
 
 
-    Mat m_pss;
+    cv::Mat m_pss;
     time_t lInit;
     time_t lEnd;
     uint32_t ui32FrameCount = 0;

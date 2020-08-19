@@ -17,7 +17,7 @@ void ImageConsProd::ImageProducer(uint32_t id) {
     cameraList[id]->g_bAcquisitionFlag = true;
     PGX_FRAME_BUFFER pFrameBuffer = NULL;
 
-    Mat m_pss;
+    cv::Mat m_pss;
     time_t lInit;
     time_t lEnd;
     uint32_t ui32FrameCount = 0;
@@ -122,10 +122,10 @@ void ImageConsProd::ImageConsumer(uint32_t id) {
         }
         resize(src, src, Size(1920/2, 1080/2));
 
-        this->radar->load_img(src);
-        if(ui32FrameCount % this->settings->track_frame == 0)
-            this->radar->find_robot();
-        this->radar->track();
+        this->radar->loadImg(src);
+        if(ui32FrameCount % this->settings->trackRobot_frame == 0)
+            this->radar->findRobot();
+        this->radar->trackRobot();
 
         writer << radar->getLastImg();
         waitKey(1);
@@ -142,13 +142,13 @@ void ImageConsProd::ImageConsumer(uint32_t id) {
     writer.release();
 
 #else
-    radarList[id]->set_enemy_color(rm::BLUE);
-    radarList[id]->get_transformation_mat();
+    radarList[id]->setEnemyColor(rm::BLUE);
+    radarList[id]->getTransformationMat();
 
     while (true)
     {
-        Mat src = cameraList[id]->m_p->clone();
-        resize(src, src, Size(1920/2, 1080/2));
+        cv::Mat src = cameraList[id]->m_p->clone();
+        resize(src, src, cv::Size(1920/2, 1080/2));
 
         if (src.data == NULL){
             std::cout << "break" << std::endl;
@@ -156,13 +156,13 @@ void ImageConsProd::ImageConsumer(uint32_t id) {
         }
         if(!ui32FrameCount)
             time(&lInit);
-        this->radarList[id]->load_img(src);
+        this->radarList[id]->loadImg(src);
 
-        if(ui32FrameCount % this->settings->track_frame == 0)
-            num = this->radarList[id]->find_robot();
+        if(ui32FrameCount % this->settings->trackRobot_frame == 0)
+            num = this->radarList[id]->findRobot();
 
         printf("camera%d: %d \n", num);
-        this->radarList[id]->track();
+        this->radarList[id]->trackRobot();
 
 //        this->ShowImg(1);
 //        if(armorFlag == ArmorDetector::ARMOR_LOCAL || armorFlag == ArmorDetector::ARMOR_GLOBAL)
@@ -184,18 +184,21 @@ void ImageConsProd::ImageConsumer(uint32_t id) {
 }
 
 void ImageConsProd::ShowImg(int waitTime) {
-    Mat map;
+    cv::Mat map;
     uint32_t radarNum = radarList.size();
 
-    if(waitTime < 0) {
+    if(waitTime < 0)
+    {
         time_t lInit, lEnd;
         time(&lInit);
         uint32_t ui32FrameCount = 0;
-        while (1) {
-            for (int i = 0; i < radarNum; i++) {
+        while (1)
+        {
+            for (int i = 0; i < radarNum; i++)
+            {
                 if (!radarList[i]->deal)
                     continue;
-                Mat img = radarList[i]->getLastImg();
+                cv::Mat img = radarList[i]->getLastImg();
                 if (i > 0)
                     map = *radarList[0] + *radarList[i];
                 else
@@ -208,7 +211,7 @@ void ImageConsProd::ShowImg(int waitTime) {
             }
             if (map.data != NULL)
                 imshow("map", map);
-            waitKey(1);
+            cv::waitKey(1);
             time(&lEnd);
             if(lEnd - lInit >= 1){
                 std::cout << "show: " << ui32FrameCount << std::endl;
@@ -217,9 +220,11 @@ void ImageConsProd::ShowImg(int waitTime) {
             }
         }
     }
-    else {
-        for (int i = 0; i < radarNum; i++) {
-            Mat img = radarList[i]->getLastImg();
+    else
+    {
+        for (int i = 0; i < radarNum; i++)
+        {
+            cv::Mat img = radarList[i]->getLastImg();
             if (i > 0)
                 map = *radarList[0] + *radarList[i];
             else
@@ -228,10 +233,9 @@ void ImageConsProd::ShowImg(int waitTime) {
             if (img.data != NULL)
                 imshow("camera"+std::to_string(i+1), img);
         }
-        if (map.data != NULL) {
+        if (map.data != NULL)
             imshow("map", map);
-        }
-        waitKey(waitTime);
+        cv::waitKey(waitTime);
     }
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../YOLO/YoloApi.h"
+#include "../YOLO/YOLOClass.h"
+#include "yolo_v2_class.hpp"
 #include "../ArmorDetector/ArmorDetector.h"
 #include<opencv2/opencv.hpp>
 #include<opencv2/tracking.hpp>
@@ -10,18 +11,25 @@
 
 #define GPU
 
+
 class Radar {
 public:
     Radar();
 
     /*
-    *	@Brief: Constructor, passing in the ArmorDetector class and yolo class
+    *	@Brief: Constructor, passing in the ArmorDetector class and YOLOClass class
      *	构造函数，传入ArmorDetector,yolo类
     */
-    Radar(rm::ArmorDetector *armorDetector, YoloApi *YOLOv3);
+    Radar(rm::ArmorDetector *armorDetector, YOLOClass *YOLOv3);
 
     /*
-    *	@Brief: Destructor, release YOLO class
+    *	@Brief: Constructor, passing in the ArmorDetector class and YOLOClass class
+     *	构造函数，传入ArmorDetector,yolo类
+    */
+    Radar(rm::ArmorDetector *armorDetector, Detector *yoloDetector);
+
+    /*
+    *	@Brief: Destructor, release YOLOClass class
      *	析构函数，释放YOLO类
     */
     ~Radar();
@@ -31,30 +39,32 @@ public:
      *	设置敌人颜色
     *	@Return: void
     */
-    void set_enemy_color(int enemyColor);
+    void setEnemyColor(int enemyColor);
 
     /*
     *	@Brief: Load the image to be detected into this class
      *	将需要检测的图像加载到该类中
     *	@Return: void
     */
-    void load_img(const cv::Mat &srcImg);
+    void loadImg(const cv::Mat &srcImg);
+
+    image_t to_image_t(cv::Mat &srcImg);
 
     /*
-    *	@Brief: Find all robots using the YOLO algorithm interface
+    *	@Brief: Find all robots using the YOLOClass algorithm interface
      *	使用YOLO算法检测所有目标
     *	@Outputs: ALL the info of detection result
     *	@Return: Number of detected targets
     */
-    int find_robot();
+    int findRobot();
 
     /*
-    *	@Brief: Track previously detected targets
+    *	@Brief: trackRobot previously detected targets
      *	对检测到的目标进行追踪
     *	@Outputs: Finished image
     *	@Return: void
     */
-    void track();
+    void trackRobot();
 
     /*
     *	@Brief: Calculate the coordinates on the map
@@ -62,7 +72,7 @@ public:
     *	@Outputs: Complete map_points
     *	@Return: void
     */
-    void map_transformation();
+    void mapTransformation();
 
     /*
     *	@Brief: Draw a map based on the target center point
@@ -70,7 +80,7 @@ public:
     *	@Outputs: Finished map
     *	@Return: void
     */
-    void draw_map();
+    void drawMap();
 
     /*
     *	@Brief: Get the transformation matrix of the image into the map
@@ -84,7 +94,7 @@ public:
     *	    用鼠标单击原始图像的三个点，你可以按q删除最近选择的点，或者按r清除所有点，选择三个点后，按Enter键结束，
     *	    然后依次在地图上点击之前三个点的映射，最后按Enter键结束。
     */
-    void get_transformation_mat();
+    void getTransformationMat();
 
     /*
     *	@Brief: Return the final processed image
@@ -125,15 +135,15 @@ private:
     *	@Outputs: Corrected YOLO_box
     *	@Return: void
     */
-    void box_fix(cv::Rect &rect);
+    void boxFix(cv::Rect &rect);
 
     /*
-    *	@Brief: Callback function needed for get_transformation_mat()
-     *	get_transformation_mat()需要用到的回调函数
+    *	@Brief: Callback function needed for getTransformationMat()
+     *	getTransformationMat()需要用到的回调函数
     *	@Outputs: Vector of storage points
     *	@Return: void
     */
-    static void window_get_points(int event, int x, int y, int flags, void* param);
+    static void windowGetPoints(int event, int x, int y, int flags, void* param);
 
     cv::Mat _srcImg;    //原图像
     cv::Mat _grayImg;   //原图像的灰度图
@@ -143,15 +153,17 @@ private:
     cv::Mat _transformationMat;  //变换矩阵
 
 #ifdef GPU
-    cuda::GpuMat gpuSrcImg;
-    cuda::GpuMat gpuGrayImg;
+    cv::cuda::GpuMat gpuSrcImg;
+    cv::cuda::GpuMat gpuGrayImg;
 #endif
 
-    Ptr<YoloApi> YOLOv3;
-    Ptr<rm::ArmorDetector> armor_detector;
-    Ptr<cv::MultiTracker> trackers;
+    cv::Ptr<YOLOClass> YOLO;
+    cv::Ptr<Detector> YOLO_detector;
+    cv::Ptr<rm::ArmorDetector> armor_detector;
+    cv::Ptr<cv::MultiTracker> trackRoboters;
 
     std::vector<cv::Rect> YOLO_box;          //YOLO检测出的所有矩形
+    std::vector<bbox_t> YOLO_bbox;
     std::vector<std::string> YOLO_class;     //YOLO检测出的矩形对应类名
     std::vector<RobotDescriptor> robot_box;  //储存检测到的所有机器人信息
 
