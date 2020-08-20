@@ -8,16 +8,9 @@ Radar::Radar()
     _srcMap = cv::imread("../Radar/map.png");
 }
 
-Radar::Radar(rm::ArmorDetector *armorDetector, Detector *yoloDetector)
+Radar::Radar(rm::ArmorDetector *armorDetector, YOLOClass *YOLO)
 {
-    this->armor_detector = armorDetector;
-    this->YOLO_detector = yoloDetector;
-    _srcMap = cv::imread("../Radar/map.png");
-}
-
-Radar::Radar(rm::ArmorDetector *armorDetector, YOLOClass *YOLOv3)
-{
-    this->YOLO = YOLOv3;
+    this->YOLO = YOLO;
     this->armor_detector = armorDetector;
     _srcMap = cv::imread("../Radar/map.png");
 }
@@ -40,24 +33,15 @@ void Radar::loadImg(const cv::Mat &srcImg)
     _srcImg = srcImg;
 }
 
-//image_t Radar::to_image_t(cv::Mat &srcImg)
-//{
-//
-//    image_t (srcImg.size[0], srcImg.size[1], 3, float_to_image()srcImg.data);
-//}
-
-
 int Radar::findRobot()
 {
     deal = false;
     YOLO_box.clear();
     YOLO_class.clear();
     robot_box.clear();
-    YOLO_bbox.clear();
     trackRoboters = cv::MultiTracker::create();
 
     YOLO_box = YOLO->get_boxes(_srcImg);
-//    YOLO_bbox = YOLO_detector->detect(YOLO->mat_to_image_t(_srcImg));
     YOLO_class = YOLO->get_class();
     if (YOLO_box.empty())
         return 0;

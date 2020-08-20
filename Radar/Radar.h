@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../YOLO/YOLOClass.h"
-#include "yolo_v2_class.hpp"
 #include "../ArmorDetector/ArmorDetector.h"
 #include<opencv2/opencv.hpp>
 #include<opencv2/tracking.hpp>
@@ -20,13 +19,7 @@ public:
     *	@Brief: Constructor, passing in the ArmorDetector class and YOLOClass class
      *	构造函数，传入ArmorDetector,yolo类
     */
-    Radar(rm::ArmorDetector *armorDetector, YOLOClass *YOLOv3);
-
-    /*
-    *	@Brief: Constructor, passing in the ArmorDetector class and YOLOClass class
-     *	构造函数，传入ArmorDetector,yolo类
-    */
-    Radar(rm::ArmorDetector *armorDetector, Detector *yoloDetector);
+    Radar(rm::ArmorDetector *armorDetector, YOLOClass *YOLO);
 
     /*
     *	@Brief: Destructor, release YOLOClass class
@@ -47,8 +40,6 @@ public:
     *	@Return: void
     */
     void loadImg(const cv::Mat &srcImg);
-
-    image_t to_image_t(cv::Mat &srcImg);
 
     /*
     *	@Brief: Find all robots using the YOLOClass algorithm interface
@@ -158,12 +149,10 @@ private:
 #endif
 
     cv::Ptr<YOLOClass> YOLO;
-    cv::Ptr<Detector> YOLO_detector;
     cv::Ptr<rm::ArmorDetector> armor_detector;
     cv::Ptr<cv::MultiTracker> trackRoboters;
 
     std::vector<cv::Rect> YOLO_box;          //YOLO检测出的所有矩形
-    std::vector<bbox_t> YOLO_bbox;
     std::vector<std::string> YOLO_class;     //YOLO检测出的矩形对应类名
     std::vector<RobotDescriptor> robot_box;  //储存检测到的所有机器人信息
 

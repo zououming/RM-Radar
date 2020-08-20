@@ -2,7 +2,7 @@
 #include "Serial/serialport.h"
 #include "ImageConsProd/ImageConsProd.h"
 using namespace rm;
-#define TEXT_PIC
+//#define TEXT_PIC
 #ifdef TEXT_PIC
 
 using namespace std;
@@ -27,9 +27,6 @@ int main(int argc, char * argv[]) {
     image_cons_prod.radarList[0]->trackRobot();
     image_cons_prod.radarList[0]->drawMap();
 
-    cv::imshow("./img.jpg", image_cons_prod.radarList[0]->getLastImg());
-    cv::imshow("./map.jpg", image_cons_prod.radarList[0]->getLastMap());
-
     image_cons_prod.ShowImg(0);
 }
 
@@ -40,12 +37,12 @@ int main(int argc, char * argv[]) {
         config_file_name = argv[1];
     Settings setting(config_file_name);
     OtherParam other_param;
-    YoloApi YOLOv3;
+    YOLOClass YOLOv4;
     ArmorDetector armorDetector;
 
     std::vector<Radar*> radar_list;
-    Radar left_radar(&armorDetector, &YOLOv3);
-    Radar right_radar(&armorDetector, &YOLOv3);
+    Radar left_radar(&armorDetector, &YOLOv4);
+    Radar right_radar(&armorDetector, &YOLOv4);
 
     radar_list.emplace_back(&left_radar);
     radar_list.emplace_back(&right_radar);
@@ -80,7 +77,7 @@ int main(int argc, char * argv[]) {
         return 0;
     }
     emStatus2 = camera_list[1]->cameraMode();
-    if(emStatus1 != GX_STATUS_SUCCESS){
+    if(emStatus2 != GX_STATUS_SUCCESS){
         std::cout<<"相机2设置错误";
         return 0;
     }
@@ -106,7 +103,7 @@ int main(int argc, char * argv[]) {
 
     for (auto camera : camera_list)
         camera->~CameraClass();
-    destroyAllWindows();
+    cv::destroyAllWindows();
     return 0;
 #endif //USE_VIDEO
 }
