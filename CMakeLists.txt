@@ -29,6 +29,7 @@ add_executable(RM_radar main.cpp
 
         YOLO/YOLOClass.h
         YOLO/YOLOClass.cpp
+        YOLO/darknet.h
 
         Radar/Radar.h
         Radar/Radar.cpp
@@ -37,10 +38,8 @@ add_executable(RM_radar main.cpp
 target_link_libraries (RM_radar
         gxiapi
         pthread
-        /home/zououming/yolov4/darknet/libdarknet.so
+        darknet
         )
-
-INCLUDE_DIRECTORIES(/home/zououming/yolov4/darknet/include)
 
 find_package(OpenCV REQUIRED)
 find_package(CUDA REQUIRED)

@@ -5,4 +5,9 @@ YOLO 实现darknet框架的调用
 
 Radar 实现雷达功能
 
+------
+
 darknet git: https://github.com/zououming/darknet
+
+将生成的libdarknet.so放在任意搜索路径下
+
