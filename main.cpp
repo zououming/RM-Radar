@@ -13,19 +13,15 @@ int main(int argc, char * argv[]) {
     YOLOClass YOLOv4("../YOLO/weightFile/my_yolov4.cfg", "../YOLO/weightFile/my_yolov4_last.weights", "../YOLO/weightFile/myData.names", 0.5);
     ArmorDetector armorDetector;
     CameraClass camera(&setting);
-    Radar radar(&armorDetector, &YOLOv4);
+    Radar radar(&armorDetector, &YOLOv4, rm::GREEN);
     ImageConsProd image_cons_prod(&setting, &other_param, &camera, &radar);
     image_cons_prod.ImageConsProd_init();
 
-    image_cons_prod.radarList[0]->setEnemyColor(rm::GREEN);
-
     cv::Mat img = cv::imread("/home/zououming/Pictures/1233.png");
-    image_cons_prod.radarList[0]->loadImg(img);
-    image_cons_prod.radarList[0]->getTransformationMat();
+    cv::Mat map = cv::imread("../Radar/map.png");
 
-    image_cons_prod.radarList[0]->findRobot();
-    image_cons_prod.radarList[0]->trackRobot();
-    image_cons_prod.radarList[0]->drawMap();
+    while(!image_cons_prod.radarList[0]->getTransformationMat(img, map));
+    image_cons_prod.radarList[0]->run(img);
 
     image_cons_prod.ShowImg(0);
 }
@@ -41,8 +37,8 @@ int main(int argc, char * argv[]) {
     ArmorDetector armorDetector;
 
     std::vector<Radar*> radar_list;
-    Radar left_radar(&armorDetector, &YOLOv4);
-    Radar right_radar(&armorDetector, &YOLOv4);
+    Radar left_radar(&armorDetector, &YOLOv4, rm::GREEN);
+    Radar right_radar(&armorDetector, &YOLOv4, rm::GREEN);
 
     radar_list.emplace_back(&left_radar);
     radar_list.emplace_back(&right_radar);

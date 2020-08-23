@@ -65,7 +65,6 @@ std::vector<cv::Rect> YOLOClass::get_boxes(cv::Mat &img)
 
     detect_boxes.clear();
     detect_classes.clear();
-    std::cout<<box_num<<std::endl;
     for(int i = 0; i < box_num; ++i){
         float max_thresh = -1;
         int class_numbering = -1;

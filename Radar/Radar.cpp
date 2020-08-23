@@ -5,33 +5,36 @@ Radar::Radar()
 {
     this->YOLO = new YOLOClass();
     this->armor_detector = new rm::ArmorDetector;
-    _srcMap = cv::imread("../Radar/map.png");
 }
 
-Radar::Radar(rm::ArmorDetector *armorDetector, YOLOClass *YOLO)
+
+Radar::Radar(rm::ArmorDetector *armorDetector, YOLOClass *YOLO, int enemyColor)
 {
     this->YOLO = YOLO;
     this->armor_detector = armorDetector;
-    _srcMap = cv::imread("../Radar/map.png");
+    this->enemy_color = enemyColor;
 }
 
 
-Radar::~Radar()
+Radar::Radar(rm::ArmorDetector *armorDetector, YOLOClass *YOLO, int enemyColor, int trackRobotFrame)
 {
-    delete [] this->YOLO;
+    this->YOLO = YOLO;
+    this->armor_detector = armorDetector;
+    this->enemy_color = enemyColor;
+    this->track_robot_frame = trackRobotFrame;
 }
 
 
-void Radar::setEnemyColor(int enemyColor)
-{
-    _enemyColor = enemyColor;
-}
-
-
-void Radar::loadImg(const cv::Mat &srcImg)
-{
+void Radar::run(const cv::Mat &srcImg) {
     _srcImg = srcImg;
+    if(frame_count++ % track_robot_frame == 0) {
+        int num = findRobot();
+        frame_count = 0;
+    }
+    trackRobot();
+    mapTransformation();
 }
+
 
 int Radar::findRobot()
 {
@@ -39,7 +42,7 @@ int Radar::findRobot()
     YOLO_box.clear();
     YOLO_class.clear();
     robot_box.clear();
-    trackRoboters = cv::MultiTracker::create();
+    track_roboters = cv::MultiTracker::create();
 
     YOLO_box = YOLO->get_boxes(_srcImg);
     YOLO_class = YOLO->get_class();
@@ -62,7 +65,7 @@ int Radar::findRobot()
         robot.team = YOLO_class[i] == "blue robot" ? rm::BLUE : rm::RED;
         robot.color = YOLO_class[i] == "blue robot" ? cv::Scalar(255, 0, 0): cv::Scalar(0, 0, 255);
         robot_box.emplace_back(robot);
-        trackRoboters->add(cv::TrackerKCF::create(), _srcImg, robot.position);
+        track_roboters->add(cv::TrackerKCF::create(), _srcImg, robot.position);
     }
     return robot_box.size();
 }
@@ -79,15 +82,15 @@ void Radar::boxFix(cv::Rect &rect)
 
 void Radar::trackRobot()
 {
-    if (trackRoboters->empty())
+    if (track_roboters->empty())
         return;
-    trackRoboters->update(_srcImg);
+    track_roboters->update(_srcImg);
     _showImg = _srcImg.clone();
-    vector<cv::Rect_<double>> new_position = trackRoboters->getObjects();
+    vector<cv::Rect_<double>> new_position = track_roboters->getObjects();
 
     string team, text;
     for (int i = 0; i < robot_box.size(); ++i){
-        if (_enemyColor == robot_box[i].team || _enemyColor == rm::GREEN){
+        if (enemy_color == robot_box[i].team || enemy_color == rm::GREEN){
             robot_box[i].position = new_position[i];
             team = robot_box[i].team == rm::RED ? "red" : "blue";
 
@@ -99,7 +102,6 @@ void Radar::trackRobot()
         }
     }
     deal = true;
-    mapTransformation();
 }
 
 
@@ -107,7 +109,7 @@ void Radar::mapTransformation()
 {
     cv::Mat map_point_mat;
     for (auto &robot : robot_box){
-        if (_enemyColor == robot.team || _enemyColor == rm::GREEN){
+        if (enemy_color == robot.team || enemy_color == rm::GREEN){
             double center[] = {double(robot.position.x + robot.position.width / 2),
                                double(robot.position.y + robot.position.height / 2), 1};
             cv::Mat box_point_mat(3, 1, CV_64FC1, center);
@@ -117,6 +119,7 @@ void Radar::mapTransformation()
             robot.map_position = map_point;
         }
     }
+    drawMap();
 }
 
 
@@ -144,14 +147,17 @@ void Radar::windowGetPoints(int event, int x, int y, int flags, void* param)
     auto* Points = (std::vector<cv::Point2f>*) param;
 
     if(event == CV_EVENT_LBUTTONDOWN){
-        printf("(%d, %d)\n", x, y);
         Points->emplace_back(x, y);
+        printf("point %d: (%d, %d)\n", Points->size(), x, y);
     }
 }
 
 
-void Radar::getTransformationMat()
+bool Radar::getTransformationMat(cv::Mat& img, cv::Mat& map)
 {
+    _srcImg = img.clone();
+    _srcMap = map.clone();
+
     cv::Mat showImg = _srcImg.clone();
     cv::Mat showMap = _srcMap.clone();
     std::vector<cv::Point2f> srcPoints, mapPoints;
@@ -160,48 +166,68 @@ void Radar::getTransformationMat()
     while(1){
         showImg = _srcImg.clone();
         cv::setMouseCallback("src", windowGetPoints, (void*)&srcPoints);
-        if (!srcPoints.empty()){
-            for (int i = 0; i < srcPoints.size(); i++){
-                cv::circle(showImg, srcPoints[i], 3, cv::Scalar(0, 255, 0), -1);
-                cv::putText(showImg, to_string(i+1), srcPoints[i], cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
-            }
-        }
-        cv::imshow("src", showImg);
+        drawPoints(srcPoints, showImg, "src");
         key = cv::waitKey(1);
-        if (key == 'q')
+        if (key == 'q' && !srcPoints.empty()){
+            printf("Delete point %d\n", srcPoints.size());
             srcPoints.pop_back();
-        else if (key == 'r')
+        }
+        else if (key == 'r') {
+            printf("Delete all points\n");
             srcPoints.clear();
-        else if (key == 13) //回车则退出
+        }
+        else if (key == 13 || srcPoints.size() == 3) { //回车则退出
+            drawPoints(srcPoints, showImg, "src");
             break;
+        }
     }
 
     printf("Click the positions of the just three points in turn on the map.\n");
+
     while(1){
         showMap = _srcMap.clone();
         cv::setMouseCallback("map", windowGetPoints, (void*)&mapPoints);
-        if (!mapPoints.empty()){
-            for (int i = 0; i < mapPoints.size(); ++i){
-                cv::circle(showMap, mapPoints[i], 3, cv::Scalar(0, 255, 0), -1);
-                cv::putText(showMap, to_string(i+1), mapPoints[i], cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
-            }
-        }
-        cv::imshow("map", showMap);
+        drawPoints(mapPoints, showMap, "map");
         key = cv::waitKey(1);
-        if (key == 'q')
+        if (key == 'q' && !mapPoints.empty()) {
+            printf("Delete point %d\n", mapPoints.size());
             mapPoints.pop_back();
-        else if (key == 'r')
+        }
+        else if (key == 'r') {
+            printf("Delete all points\n");
             mapPoints.clear();
-        else if (key == 13)
+        }
+        else if (key == 13 || mapPoints.size() == 3) { //回车则退出
+            drawPoints(mapPoints, showMap, "map");
             break;
+        }
     }
     cv::destroyWindow("src");
     cv::destroyWindow("map");
+
+    if(srcPoints.size() != 3 || mapPoints.size() != 3) {
+        printf("Both pictures must have three points!\n");
+        return false;
+    }
 
     _transformationMat = getAffineTransform(srcPoints, mapPoints);
     double add_array[] = {0, 0, 1};
     cv::Mat add_vec = cv::Mat(1, 3, CV_64FC1, add_array);
     cv::vconcat(_transformationMat, add_vec, _transformationMat);
+    std::cout << "transformation mat:\n"<< _transformationMat << std::endl;
+
+    return true;
+}
+
+
+void Radar::drawPoints(std::vector<cv::Point2f> points, cv::Mat img, std::string window_name){
+    if (!points.empty()){
+        for (int i = 0; i < points.size(); ++i){
+            cv::circle(img, points[i], 3, cv::Scalar(0, 255, 0), -1);
+            cv::putText(img, to_string(i+1), points[i], cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 255), 2);
+        }
+    }
+    cv::imshow(window_name, img);
 }
 
 
@@ -229,4 +255,14 @@ cv::Mat Radar::operator+(Radar &radar1)
         this->robot_box.emplace_back(robot);
     this->drawMap();
     return this->getLastMap();
+}
+
+
+bool Radar::isHandled(){
+    return this->deal;
+}
+
+
+void Radar::setFlag(){
+    this->deal = false;
 }
